@@ -6,10 +6,6 @@ const makeSnapshot = ({x = 0, cells = [], leftVoid = false, rightVoid = false} =
 	return snapshot
 }
 
-const resetHistory = () => {
-	state.history = [makeSnapshot({x: 0, cells: [true]})]
-}
-
 const getCell = (snapshot, x) => {
 	
 	if (x < snapshot.x) return snapshot.leftVoid
@@ -35,39 +31,54 @@ const setRules = (number) => {
 	*/
 }
 
-resetHistory()
 state.rules = new Map()
 state.currentRule = 0
 setRules(state.currentRule)
-
-on.keydown(e => {
-	if (e.key === "ArrowRight") {
-		state.currentRule++
-		if (state.currentRule >= 16) {
-			state.currentRule = 0
-		}
-		setRules(state.currentRule)
-		resetHistory()
-	}
-	else if (e.key === "ArrowLeft") {
-		state.currentRule--
-		if (state.currentRule < 0) {
-			state.currentRule = 15
-		}
-		setRules(state.currentRule)
-		resetHistory()
-	}
-	
-	
-})
 
 on.load(() => {
 
 	const show = Show.start({paused: false, scale: 1.0})
 	const {context, canvas} = show
 
-	const CELL_SIZE = 4
+	const CELL_SIZE = 1
 	const CENTER = canvas.width/2 - CELL_SIZE/2
+	
+	const resetHistory = () => {
+		context.clearRect(0, 0, canvas.width, canvas.height)
+		state.history = [makeSnapshot({x: 0, cells: [true]})]
+	}
+	
+	resetHistory()
+	
+	on.keydown(e => {
+		if (e.key === "ArrowRight") {
+			state.currentRule++
+			if (state.currentRule >= 16) {
+				state.currentRule = 0
+			}
+			setRules(state.currentRule)
+			resetHistory()
+		}
+		else if (e.key === "ArrowLeft") {
+			state.currentRule--
+			if (state.currentRule < 0) {
+				state.currentRule = 15
+			}
+			setRules(state.currentRule)
+			resetHistory()
+		}
+
+
+	})
+
+	on.touchstart(e => {
+		state.currentRule++
+		if (state.currentRule >= 16) {
+			state.currentRule = 0
+		}
+		setRules(state.currentRule)
+		resetHistory()
+	})
 	
 	const drawSnapshot = (snapshot, y) => {
 		for (let i = 0; i < snapshot.cells.length; i++) {
@@ -89,11 +100,13 @@ on.load(() => {
 		t = 0
 		
 		
-		context.clearRect(0, 0, canvas.width, canvas.height)
+		/*context.clearRect(0, 0, canvas.width, canvas.height)
 		for (let i = 0; i < state.history.length; i++) {
 			const snapshot = state.history[i]
 			drawSnapshot(snapshot, i + 1)
-		}
+		}*/
+		
+		drawSnapshot(state.history.last, state.history.length)
 		
 		
 		const previous = state.history.last
