@@ -80,6 +80,15 @@ on.load(() => {
 		resetHistory()
 	})
 	
+	on.mousedown(e => {
+		state.currentRule++
+		if (state.currentRule >= 16) {
+			state.currentRule = 0
+		}
+		setRules(state.currentRule)
+		resetHistory()
+	})
+	
 	const drawSnapshot = (snapshot, y) => {
 		for (let i = 0; i < snapshot.cells.length; i++) {
 			const cell = snapshot.cells[i]
