@@ -90,11 +90,21 @@ on.load(() => {
 	})
 	
 	const drawSnapshot = (snapshot, y) => {
+		
+		const leftEdge = CENTER + snapshot.x*CELL_SIZE
+		const rightEdge = leftEdge + snapshot.cells.length*CELL_SIZE
+		
+		context.fillStyle = snapshot.leftVoid? Colour.Blue : Colour.Black
+		context.fillRect(0, Math.round(y*CELL_SIZE), Math.round(leftEdge), Math.round(CELL_SIZE))
+		
+		context.fillStyle = snapshot.rightVoid? Colour.Blue : Colour.Black
+		context.fillRect(Math.round(rightEdge), Math.round(y*CELL_SIZE), canvas.width, Math.round(CELL_SIZE))
+		
 		for (let i = 0; i < snapshot.cells.length; i++) {
 			const cell = snapshot.cells[i]
 			const x = CENTER + (snapshot.x + i)*CELL_SIZE
 			context.fillStyle = cell? Colour.Blue : Colour.Black
-			context.fillRect(Math.round(x), Math.round(y * CELL_SIZE), Math.round(CELL_SIZE), Math.round(CELL_SIZE))
+			context.fillRect(Math.round(x), Math.round(y*CELL_SIZE), Math.round(CELL_SIZE), Math.round(CELL_SIZE))
 		}
 	}
 	
@@ -131,6 +141,13 @@ on.load(() => {
 		
 		const x = previous.x - 0.5
 		const present = makeSnapshot({x, cells})
+		
+		if (previous.rightVoid) present.rightVoid = state.rules.get(00)
+		else present.rightVoid = state.rules.get(11)
+		
+		if (previous.leftVoid) present.leftVoid = state.rules.get(00)
+		else present.leftVoid = state.rules.get(11)
+		
 		state.history.push(present)
 		
 	}
