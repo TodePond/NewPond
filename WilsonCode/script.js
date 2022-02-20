@@ -142,11 +142,11 @@ on.load(() => {
 		const x = previous.x - 0.5
 		const present = makeSnapshot({x, cells})
 		
-		if (previous.rightVoid) present.rightVoid = state.rules.get(00)
-		else present.rightVoid = state.rules.get(11)
+		if (previous.rightVoid) present.rightVoid = state.rules.get(11)
+		else present.rightVoid = state.rules.get(00)
 		
-		if (previous.leftVoid) present.leftVoid = state.rules.get(00)
-		else present.leftVoid = state.rules.get(11)
+		if (previous.leftVoid) present.leftVoid = state.rules.get(11)
+		else present.leftVoid = state.rules.get(00)
 		
 		state.history.push(present)
 		
