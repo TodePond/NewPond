@@ -40,7 +40,7 @@ on.load(() => {
 	const show = Show.start({paused: false, scale: 1.0})
 	const {context, canvas} = show
 
-	const CELL_SIZE = 1
+	const CELL_SIZE = 2
 	const CENTER = canvas.width/2 - CELL_SIZE/2
 	
 	const resetHistory = () => {
