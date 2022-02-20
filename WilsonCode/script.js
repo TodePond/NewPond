@@ -71,14 +71,14 @@ on.load(() => {
 
 	})
 
-	on.touchstart(e => {
+	/*on.touchstart(e => {
 		state.currentRule++
 		if (state.currentRule >= 16) {
 			state.currentRule = 0
 		}
 		setRules(state.currentRule)
 		resetHistory()
-	})
+	})*/
 	
 	on.mousedown(e => {
 		state.currentRule++
