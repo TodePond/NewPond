@@ -110,7 +110,7 @@ on.load(() => {
 	
 	const drawSnapshot = (snapshot, y) => {
 		
-		y = state.yOffset
+		y = state.yOffset * SAMPLE_SIZE
 		
 		const leftEdge = 0 + snapshot.x*CELL_SIZE
 		const rightEdge = leftEdge + snapshot.cells.length*CELL_SIZE
@@ -128,7 +128,7 @@ on.load(() => {
 			const x = 0 + (snapshot.x + i)*CELL_SIZE
 			context.fillStyle = cell? Colour.Blue : Colour.Black
 			if (cell === 2) context.fillStyle = Colour.Green
-			context.fillRect(Math.round(x+state.xOffset), Math.round(y*CELL_HEIGHT), Math.round(CELL_SIZE), Math.round(CELL_HEIGHT))
+			context.fillRect(Math.round(x+state.xOffset), Math.round((y+tock)*CELL_HEIGHT), Math.round(CELL_SIZE), Math.round(CELL_HEIGHT))
 		}
 	}
 	
