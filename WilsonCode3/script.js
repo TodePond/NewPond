@@ -1,8 +1,9 @@
 
 const state = {}
 
+const SAMPLE_SIZE = 30
 state.yOffset = 0
-state.xOffset = 0
+state.xOffset = SAMPLE_SIZE/2
 
 const makeSnapshot = ({x = 0, cells = [], leftVoid = 0, rightVoid = 0} = {}) => {
 	const snapshot = {x, cells, leftVoid, rightVoid}
@@ -39,7 +40,6 @@ const setRules = (number) => {
 	*/
 }
 
-const SAMPLE_SIZE = 30
 
 state.rules = new Map()
 state.currentRule = 0
@@ -47,13 +47,26 @@ setRules(state.currentRule)
 
 on.load(() => {
 
-	const show = Show.start({paused: false, scale: 1.0, speed: 1000})
+	const show = Show.start({paused: false, scale: 1.0, speed: 10000, /*speed: 1000*/})
 	const {context, canvas} = show
 
-	const CELL_SIZE = 2
+
+	const CELL_SIZE = 1
 	//const CELL_HEIGHT = canvas.height
 	const CELL_HEIGHT = 1
 	const CENTER = canvas.width/2 - CELL_SIZE/2
+
+	const area = 19682
+
+	canvas.height = Math.sqrt(area) * SAMPLE_SIZE
+	canvas.width = Math.sqrt(area) * (SAMPLE_SIZE) + SAMPLE_SIZE
+	print(canvas.height, canvas.width)
+	canvas.style.height = canvas.height*4
+	canvas.style.width = canvas.width*4
+
+	
+	context.fillStyle = Colour.Void
+	context.fillRect(0, 0, canvas.width, canvas.height)
 	
 	const resetHistory = () => {
 		//context.clearRect(0, 0, canvas.width, canvas.height)
@@ -69,7 +82,7 @@ on.load(() => {
 	
 	resetHistory()
 	
-	on.keydown(e => {
+	/*on.keydown(e => {
 		if (e.key === "ArrowRight") {
 			state.currentRule++
 			if (state.currentRule >= 19682) {
@@ -88,7 +101,7 @@ on.load(() => {
 		}
 
 
-	})
+	})*/
 
 	/*on.touchstart(e => {
 		state.currentRule++
@@ -99,14 +112,14 @@ on.load(() => {
 		resetHistory()
 	})*/
 	
-	on.mousedown(e => {
+	/*on.mousedown(e => {
 		state.currentRule++
 		if (state.currentRule >= 19682) {
 			state.currentRule = 0
 		}
 		setRules(state.currentRule)
 		resetHistory()
-	})
+	})*/
 	
 	const drawSnapshot = (snapshot, y) => {
 		
@@ -128,7 +141,7 @@ on.load(() => {
 			const x = 0 + (snapshot.x + i)*CELL_SIZE
 			context.fillStyle = cell? Colour.Blue : Colour.Black
 			if (cell === 2) context.fillStyle = Colour.Green
-			context.fillRect(Math.round(x+state.xOffset), Math.round((y+tock)*CELL_HEIGHT), Math.round(CELL_SIZE), Math.round(CELL_HEIGHT))
+			context.fillRect((x+state.xOffset), ((y+tock)*CELL_HEIGHT), (CELL_SIZE), (CELL_HEIGHT))
 		}
 	}
 	
@@ -136,6 +149,11 @@ on.load(() => {
 	let tock = 0
 	show.tick = () => {
 		
+		
+		if (state.currentRule >= 19682) {
+			return
+		}
+
 		if (t > 0) {
 			t--
 			return
@@ -155,16 +173,18 @@ on.load(() => {
 		if (tock % 1 === 0) {
 			context.globalAlpha = 0.9
 			drawSnapshot(state.history.last, state.history.length)
+			
 		}
 		
-		if (tock > SAMPLE_SIZE) {
+		if (tock >= SAMPLE_SIZE) {
 			tock = 0
 			setCode(state.currentRule + 1)
 			state.yOffset++
-			if (state.yOffset > canvas.height/CELL_HEIGHT) {
+			if (state.yOffset * SAMPLE_SIZE > (canvas.height/CELL_HEIGHT) - SAMPLE_SIZE*CELL_HEIGHT) {
+				print("col")
 				state.yOffset = 0
-				state.xOffset += SAMPLE_SIZE*2.5
-				if (state.xOffset + SAMPLE_SIZE*2.5 > canvas.width) {
+				state.xOffset += SAMPLE_SIZE*CELL_SIZE*1.0
+				if (state.xOffset + SAMPLE_SIZE*CELL_SIZE*1.0 > canvas.width) {
 					//state.xOffset = 0
 				}
 			}
