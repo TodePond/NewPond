@@ -2,45 +2,53 @@ const Show = {}
 
 {
 
+	
+
+	Show.start = ({canvas, context, paused = false, scale = 1.0, speed = 1.0, resize = () => {}, tick = () => {}, construct = () => {}} = {}) => {
+		
+		const show = {canvas, context, paused, scale, speed, resize, tick, construct}
+
+		if (document.body === null) {
+			addEventListener("load", () => start(show))
+		} else {
+			start(show)
+		}
+		
+		return show
+	}
+
 	const start = (show) => {
 		
-		document.body.style["margin"] = "0px"
-		document.body.style["overflow"] = "hidden"
-		document.body.style["background-color"] = Colour.Void
+		// TODO: support canvases of different sizes. just for provided ones? or all?
+		if (show.canvas === undefined) {
+			document.body.style["margin"] = "0px"
+			document.body.style["overflow"] = "hidden"
+			document.body.style["background-color"] = Colour.Void
 
-		const canvas = document.createElement("canvas")
-		const context = canvas.getContext("2d")
-		canvas.style["background-color"] = Colour.Void
-		canvas.style["image-rendering"] = "pixelated"
-		document.body.appendChild(canvas)
+			show.canvas = document.createElement("canvas")
+			show.canvas.style["background-color"] = Colour.Void
+			show.canvas.style["image-rendering"] = "pixelated"
+			document.body.appendChild(show.canvas)
+		}
+
+		if (show.context === undefined) {
+			show.context = show.canvas.getContext("2d")
+		}
 		
-		show.canvas = canvas
-		show.context = context
-
-		on.resize(() => {
-
-			canvas.width = innerWidth * show.scale
-			canvas.height = innerHeight * show.scale
-			canvas.style["width"] = canvas.width
-			canvas.style["height"] = canvas.height
+		const resize = () => {
+			show.canvas.width = innerWidth * show.scale
+			show.canvas.height = innerHeight * show.scale
+			show.canvas.style["width"] = show.canvas.width
+			show.canvas.style["height"] = show.canvas.height
 			
 			const margin = (100 - show.scale*100)/2
-			canvas.style["margin-top"] = `${margin}vh`
-			canvas.style["margin-bottom"] = `${margin}vh`
-			canvas.style["margin-left"] = `${margin}vw`
-			canvas.style["margin-right"] = `${margin}vw`
+			show.canvas.style["margin-top"] = `${margin}vh`
+			show.canvas.style["margin-bottom"] = `${margin}vh`
+			show.canvas.style["margin-left"] = `${margin}vw`
+			show.canvas.style["margin-right"] = `${margin}vw`
 			
-			show.resize()
-
-		})
-		
-		trigger("resize")
-
-		on.keydown(e => {
-			if (e.key === " ") show.paused = !show.paused
-		})
-
-		show.construct()
+			show.resize(show.context, show.canvas)
+		}
 
 		let t = 0
 		const tick = () => {
@@ -48,32 +56,23 @@ const Show = {}
 			if (!show.paused) {
 				t += show.speed
 				while (t > 0) {
-					show.update()
+					show.tick(show.context, show.canvas)
 					t--
 				}
 			}
-
-			show.draw()
+			
 			requestAnimationFrame(tick)
 		}
-		
-		tick()
-		
-	}
 
-	Show.start = ({paused = false, scale = 1.0, speed = 1.0, resize = () => {}, update = () => {}, draw = () => {}, construct = () => {}} = {}) => {
+
+		addEventListener("resize", resize)
+		addEventListener("keydown", (e) => {
+			if (e.key === " ") show.paused = !show.paused
+		})
 		
-		const show = {paused, scale, speed, resize, update, draw, construct}
-
-		if (document.body === null) {
-			addEventListener("load", () => {
-				start(show)
-			})
-			return show
-		}
-
-		start(show)
-		return show
+		resize()
+		requestAnimationFrame(tick)
+		
 	}
 
 }
