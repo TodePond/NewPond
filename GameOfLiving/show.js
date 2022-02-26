@@ -4,7 +4,7 @@ const Show = {}
 
 	
 
-	Show.start = ({canvas, context, paused = false, scale = 1.0, speed = 1.0, resize = () => {}, tick = () => {}, construct = () => {}} = {}) => {
+	Show.start = ({canvas, context, paused = false, scale = 1.0, speed = 1.0, resize = () => {}, tick = () => {}} = {}) => {
 		
 		const show = {canvas, context, paused, scale, speed, resize, tick, construct}
 
