@@ -9,16 +9,22 @@ let brush = undefined
 // CONFIG //
 //========//
 const WORLD_WIDTH = 200
-const WORLD_HEIGHT = 200
+const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
-	[ 1, 0],
-	[ 1,-1],
+	/*[ 1, 0],
 	[ 0,-1],
-	[-1,-1],
 	[-1, 0],
+	[ 0, 1],*/
+
+	[ 1,-1],
+	[-1,-1],
 	[-1, 1],
-	[ 0, 1],
 	[ 1, 1],
+
+	[ 2, 0],
+	[ 0,-2],
+	[-2, 0],
+	[ 0, 2],
 ]
 
 //===============//
@@ -74,7 +80,7 @@ const drawCell = (context, cell) => {
 	const nextElementKey = getNextElementKey()
 	const element = cell[nextElementKey]
 	context.fillStyle = element.colour
-	context.fillRect(x, y, width, height)
+	context.fillRect(...[x, y, width, height].map(n => Math.round(n)))
 }
 
 const changeCell = (context, cell, element) => {
@@ -121,7 +127,7 @@ const ELEMENT_DEAD = makeElement({
 	colour: Colour.Blue,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
-		if (score === 3) changeCell(context, cell, ELEMENT_ALIVE)
+		if (score >= 3 && score <= 3) changeCell(context, cell, ELEMENT_ALIVE)
 		else keepCell(context, cell)
 	}
 })
