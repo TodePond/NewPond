@@ -2,9 +2,9 @@ const Show = {}
 
 {
 
-	Show.start = ({canvas, context, paused = false, scale = 1.0, speed = 1.0, resize = () => {}, tick = () => {}} = {}) => {
+	Show.start = ({canvas, context, paused = false, scale = 1.0, speed = 1.0, resize = () => {}, tick = () => {}, supertick = () => {}} = {}) => {
 		
-		const show = {canvas, context, paused, scale, speed, resize, tick}
+		const show = {canvas, context, paused, scale, speed, resize, tick, supertick}
 
 		if (document.body === null) {
 			addEventListener("load", () => start(show))
@@ -50,13 +50,12 @@ const Show = {}
 
 		let t = 0
 		const tick = () => {
-			
-			if (!show.paused) {
-				t += show.speed
-				while (t > 0) {
-					show.tick(show.context, show.canvas)
-					t--
-				}
+
+			t += show.speed
+			while (t > 0) {
+				if (!show.paused) show.tick(show.context, show.canvas)
+				show.supertick(show.context, show.canvas)
+				t--
 			}
 			
 			requestAnimationFrame(tick)
