@@ -8,7 +8,7 @@ let brushSize = 3
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 250
+const WORLD_WIDTH = 750
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
 	/*[ 1, 0],
@@ -109,7 +109,7 @@ const changeCell = (context, cell, element, now = false) => {
 		}
 	}
 	
-	if (!t) drawCell(context, cell)
+	if (t) drawCell(context, cell)
 
 }
 
@@ -145,7 +145,7 @@ const place = (context, x, y, alive) => {
 	const cell = world.get(key)
 	const target = alive? ELEMENT_ALIVE : ELEMENT_DEAD
 	if (cell[getElementKey()] !== target) {
-		changeCell(context, cell, target, true)
+		changeCell(context, cell, target, false)
 	}
 }
 
@@ -173,7 +173,7 @@ const ELEMENT_DEAD = makeElement({
 })
 
 const ELEMENT_ALIVE = makeElement({
-	colour: Colour.Red,
+	colour: Colour.Purple,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score < 2 || score > 3) changeCell(context, cell, ELEMENT_DEAD)
@@ -207,6 +207,13 @@ show.resize = (context) => {
 
 show.tick = (context) => {
 
+	if (Mouse.Left) {
+		paint(context, true)
+	}
+	else if (Mouse.Right) {
+		paint(context, false)
+	}
+
 	const elementKey = getElementKey()
 	for (const cell of world.values()) {
 		const element = cell[elementKey]
@@ -218,12 +225,12 @@ show.tick = (context) => {
 
 
 show.supertick = (context) => {
-	if (Mouse.Left) {
+	/*if (Mouse.Left) {
 		paint(context, true)
 	}
 	else if (Mouse.Right) {
 		paint(context, false)
-	}
+	}*/
 }
 
 on.contextmenu(e => e.preventDefault(), {passive: false})
