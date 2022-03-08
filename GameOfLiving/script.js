@@ -3,12 +3,12 @@
 //=========//
 const world = new Map()
 let t = true
-let brush = undefined
+let brushSize = 3
 
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 200
+const WORLD_WIDTH = 500
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
 	/*[ 1, 0],
@@ -80,13 +80,19 @@ const drawCell = (context, cell) => {
 	const nextElementKey = getNextElementKey()
 	const element = cell[nextElementKey]
 	context.fillStyle = element.colour
-	context.fillRect(...[x, y, width, height].map(n => Math.round(n)))
+	/*const padding = 1.2
+	const xpadding = (width*padding - width)/2
+	const ypadding = (height*padding - height)/2*/
+	context.fillRect(...[x, y, width, height].map(n => n))
 }
 
 const changeCell = (context, cell, element) => {
 	const nextElementKey = getNextElementKey()
 	cell[nextElementKey] = element
 	drawCell(context, cell)
+	for (let i = 0; i < 4; i++) {
+		//drawCell(context, cell.neighbours[i])
+	}
 }
 
 const keepCell = (context, cell) => {
@@ -95,20 +101,31 @@ const keepCell = (context, cell) => {
 	cell[nextElementKey] = cell[elementKey]
 }
 
-const paint = (context) => {
+const paint = (context, alive = true) => {
 	const {canvas} = context
 	const [mx, my] = Mouse.position
-	const x = Math.round((mx - canvas.offsetLeft) / canvas.width * WORLD_WIDTH)
-	const y = Math.round((my - canvas.offsetTop) / canvas.height * WORLD_HEIGHT)
+	const x = Math.floor((mx - canvas.offsetLeft) / canvas.width * WORLD_WIDTH)
+	const y = Math.floor((my - canvas.offsetTop) / canvas.height * WORLD_HEIGHT)
+	for (let px = -brushSize; px < brushSize; px++) {
+		for (let py = -brushSize; py < brushSize; py++) {
+			place(context, x+px, y+py, alive)
+		}
+	}
+	
+}
+
+const place = (context, x, y, alive) => {
 	if (x < 0) return
 	if (y < 0) return
 	if (x >= WORLD_WIDTH) return
 	if (y >= WORLD_HEIGHT) return
 	const key = getCellKey(x, y)
 	const cell = world.get(key)
-	changeCell(context, cell, brush)
+	changeCell(context, cell, alive? ELEMENT_ALIVE : ELEMENT_DEAD)
 	const elementKey = getElementKey()
-	cell[elementKey] = brush
+	const nextElementKey = getNextElementKey()
+	cell[elementKey] = alive? ELEMENT_ALIVE : ELEMENT_DEAD
+	cell[nextElementKey] = alive? ELEMENT_ALIVE : ELEMENT_DEAD
 }
 
 //==========//
@@ -140,8 +157,6 @@ const ELEMENT_ALIVE = makeElement({
 		else keepCell(context, cell)
 	}
 })
-
-brush = ELEMENT_ALIVE
 
 //=============//
 // SETUP WORLD //
@@ -181,6 +196,11 @@ show.tick = (context) => {
 
 show.supertick = (context) => {
 	if (Mouse.Left) {
-		paint(context)
+		paint(context, true)
+	}
+	else if (Mouse.Right) {
+		paint(context, false)
 	}
 }
+
+on.contextmenu(e => e.preventDefault(), {passive: false})
