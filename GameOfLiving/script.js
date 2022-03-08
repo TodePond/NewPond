@@ -8,7 +8,7 @@ let brushSize = 3
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 500
+const WORLD_WIDTH = 250
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
 	/*[ 1, 0],
@@ -34,6 +34,8 @@ const getCellKey = (x, y) => `${x},${y}`
 const getCellPosition = (key) => key.split(",").map(n => parseInt(n))
 const getElementKey = () => t? "elementTick" : "elementTock"
 const getNextElementKey = () => t? "elementTock" : "elementTick"
+const getScoreKey = () => t? "scoreTick" : "scoreTock"
+const getNextScoreKey = () => t? "scoreTock" : "scoreTick"
 
 const makeCell = (x, y) => {
 	const cell = {
@@ -42,6 +44,9 @@ const makeCell = (x, y) => {
 		elementTick: ELEMENT_DEAD,
 		elementTock: ELEMENT_DEAD,
 		neighbours: [],
+		scoreTick: 0,
+		scoreTock: 0,
+		t: true,
 	}
 	return cell
 }
@@ -65,7 +70,7 @@ const makeElement = ({colour, behave} = {}) => {
 }
 
 const drawWorld = (context) => {
-	context.fillStyle = Colour.Blue
+	context.fillStyle = ELEMENT_DEAD.colour
 	context.fillRect(0, 0, context.canvas.width, context.canvas.height)
 	for (const cell of world.values()) {
 		drawCell(context, cell)
@@ -86,19 +91,36 @@ const drawCell = (context, cell) => {
 	context.fillRect(...[x, y, width, height].map(n => n))
 }
 
-const changeCell = (context, cell, element) => {
-	const nextElementKey = getNextElementKey()
+const changeCell = (context, cell, element, now = false) => {
+	
+	const nextElementKey = now? getElementKey() : getNextElementKey()
+	const oldElement = cell[nextElementKey]
 	cell[nextElementKey] = element
-	drawCell(context, cell)
-	for (let i = 0; i < 4; i++) {
-		//drawCell(context, cell.neighbours[i])
+
+	if (element !== oldElement) {
+		const nextScoreKey = getNextScoreKey()
+		const scoreKey = getScoreKey()
+		for (const neighbour of cell.neighbours) {
+			if (neighbour.t !== t) {
+				neighbour.t = t
+				neighbour[nextScoreKey] = neighbour[scoreKey]
+			}
+			neighbour[nextScoreKey] += element === ELEMENT_ALIVE? 1 : -1
+		}
 	}
+	
+	if (!t) drawCell(context, cell)
+
 }
 
 const keepCell = (context, cell) => {
 	const elementKey = getElementKey()
 	const nextElementKey = getNextElementKey()
 	cell[nextElementKey] = cell[elementKey]
+
+	/*const scoreKey = getScoreKey()
+	const nextScoreKey = getNextScoreKey()
+	cell[nextScoreKey] = cell[scoreKey]*/
 }
 
 const paint = (context, alive = true) => {
@@ -121,17 +143,18 @@ const place = (context, x, y, alive) => {
 	if (y >= WORLD_HEIGHT) return
 	const key = getCellKey(x, y)
 	const cell = world.get(key)
-	changeCell(context, cell, alive? ELEMENT_ALIVE : ELEMENT_DEAD)
-	const elementKey = getElementKey()
-	const nextElementKey = getNextElementKey()
-	cell[elementKey] = alive? ELEMENT_ALIVE : ELEMENT_DEAD
-	cell[nextElementKey] = alive? ELEMENT_ALIVE : ELEMENT_DEAD
+	const target = alive? ELEMENT_ALIVE : ELEMENT_DEAD
+	if (cell[getElementKey()] !== target) {
+		changeCell(context, cell, target, true)
+	}
 }
 
 //==========//
 // ELEMENTS //
 //==========//
 const getCellScore = (cell) => {
+	const scoreKey = getScoreKey()
+	return cell[scoreKey]
 	const elementKey = getElementKey()
 	let score = 0
 	for (const neighbour of cell.neighbours) {
@@ -141,7 +164,7 @@ const getCellScore = (cell) => {
 }
 
 const ELEMENT_DEAD = makeElement({
-	colour: Colour.Blue,
+	colour: Colour.Black,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score >= 3 && score <= 3) changeCell(context, cell, ELEMENT_ALIVE)
@@ -150,7 +173,7 @@ const ELEMENT_DEAD = makeElement({
 })
 
 const ELEMENT_ALIVE = makeElement({
-	colour: Colour.Green,
+	colour: Colour.Red,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score < 2 || score > 3) changeCell(context, cell, ELEMENT_DEAD)
