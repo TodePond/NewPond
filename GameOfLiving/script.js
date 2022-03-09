@@ -8,13 +8,9 @@ let brushSize = 3
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 800
+const WORLD_WIDTH = 500
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
-	/*[ 1, 0],
-	[ 0,-1],
-	[-1, 0],
-	[ 0, 1],*/
 
 	[ 1,-1],
 	[-1,-1],
@@ -25,6 +21,7 @@ const NEIGHBOURHOOD = [
 	[ 0,-2],
 	[-2, 0],
 	[ 0, 2],
+
 ]
 
 //===============//
