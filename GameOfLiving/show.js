@@ -2,7 +2,7 @@ const Show = {}
 
 {
 
-	Show.start = ({canvas, context, paused = false, scale = 1.0, speed = 1.0, resize = () => {}, tick = () => {}, supertick = () => {}} = {}) => {
+	Show.start = ({canvas, context, paused = false, scale = 1.0, aspect, speed = 1.0, resize = () => {}, tick = () => {}, supertick = () => {}} = {}) => {
 		
 		const show = {canvas, context, paused, scale, speed, resize, tick, supertick}
 
@@ -34,16 +34,19 @@ const Show = {}
 		}
 		
 		const resize = () => {
-			show.canvas.width = innerWidth * show.scale
-			show.canvas.height = innerHeight * show.scale
+
+			const size = Math.min(innerWidth, innerHeight)
+			const margin = `${(100 - show.scale*100)/2}` + (innerWidth > innerHeight? "vh" : "vw")
+
+			show.canvas.width = Math.round(size * show.scale)
+			show.canvas.height = Math.round(size * show.scale)
 			show.canvas.style["width"] = show.canvas.width
 			show.canvas.style["height"] = show.canvas.height
 			
-			const margin = (100 - show.scale*100)/2
-			show.canvas.style["margin-top"] = `${margin}vh`
-			show.canvas.style["margin-bottom"] = `${margin}vh`
-			show.canvas.style["margin-left"] = `${margin}vw`
-			show.canvas.style["margin-right"] = `${margin}vw`
+			show.canvas.style["margin-top"] = margin
+			show.canvas.style["margin-bottom"] = margin
+			show.canvas.style["margin-left"] = margin
+			show.canvas.style["margin-right"] = margin
 			
 			show.resize(show.context, show.canvas)
 		}

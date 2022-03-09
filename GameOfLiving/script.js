@@ -84,7 +84,7 @@ const drawCell = (context, cell) => {
 	/*const padding = 1.2
 	const xpadding = (width*padding - width)/2
 	const ypadding = (height*padding - height)/2*/
-	context.fillRect(...[x, y, width, height].map(n => n))
+	context.fillRect(...[x, y, width, height].map(n => Math.round(n)))
 }
 
 const changeCell = (context, cell, element) => {
