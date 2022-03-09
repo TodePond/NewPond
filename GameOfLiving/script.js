@@ -3,7 +3,7 @@
 //=========//
 const world = new Map()
 let t = true
-let brushSize = 3
+let brushSize = 5
 
 //========//
 // CONFIG //
@@ -136,6 +136,9 @@ const paint = (context, alive = true) => {
 			place(context, x+px, y+py, alive)
 		}
 	}
+	if (brushSize === 0) {
+		place(context, x, y, alive)
+	}
 }
 
 const place = (context, x, y, alive) => {
@@ -219,6 +222,7 @@ show.tick = (context) => {
 
 show.supertick = (context) => {
 	
+	if (show.paused) t = !t
 
 	if (Mouse.Left) {
 		paint(context, true)
@@ -227,7 +231,7 @@ show.supertick = (context) => {
 		paint(context, false)
 	}
 
-	if (!show.paused) t = !t
+	t = !t
 }
 
 on.contextmenu(e => e.preventDefault(), {passive: false})
