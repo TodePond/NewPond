@@ -1,16 +1,35 @@
+let COLOURS = [
+	Colour.Black,
+	Colour.Blue,
+	Colour.Cyan,
+	Colour.Green,
+	Colour.Grey,
+	Colour.Orange,
+	Colour.Pink,
+	Colour.Purple,
+	Colour.Red,
+	Colour.Rose,
+	Colour.Silver,
+	Colour.White,
+	Colour.Yellow
+]
 
-const COLOUR_ON = Colour.Green
-const COLOUR_OFF = Colour.Blue
+const COLOUR_ON = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_ON)
+const COLOUR_OFF = COLOURS[Random.Uint8 % COLOURS.length]
 
-const WORLD_WIDTH = 15
-const WORLD_HEIGHT = 10
+const WORLD_WIDTH = 128
+const WORLD_HEIGHT = 128
 
-const CELL_SIZE = 20
+const CELL_SIZE = 6
 const VIEW_WIDTH = WORLD_WIDTH * CELL_SIZE
 const VIEW_HEIGHT = WORLD_HEIGHT * CELL_SIZE
 
+const BRUSH_SIZE = 3
+
 const CODE_LENGTH = 6
 const NEIGHBOURHOOD_SIZE = 5
+const ORIGIN_OFFSET = 2
 const NEIGHBOURHOOD_COUNT = 64
 const NEIGHBOURHOOD_MAP = [
 	0, 1, 3, 1, 0,
@@ -36,7 +55,7 @@ const NEIGHBOURHOODS = NEIGHBOURHOOD_EXPANDED_CODES.map(code => {
 	for (let x = 0; x < NEIGHBOURHOOD_SIZE; x++) {
 		for (let y = 0; y < NEIGHBOURHOOD_SIZE; y++) {
 			const value = code[index]
-			if (value === "1") positions.push([x, y])
+			if (value === "1") positions.push([x - ORIGIN_OFFSET, y - ORIGIN_OFFSET])
 			index++
 		}
 	}
@@ -54,11 +73,10 @@ const printNeighbourhoods = () => {
 }
 
 const makeCell = () => {
-	const value = 0 //Random.Uint8 % 2
-	const scores = NEIGHBOURHOODS.map(() => 0)
-	const score = 0
+	const value = false
+	const scores = [0, 0]
 	const influencees = NEIGHBOURHOODS.map(() => [])
-	const cell = {value, score, scores, influencees}
+	const cell = {value, scores, influencees}
 	return cell
 }
 
@@ -77,9 +95,11 @@ const linkInfluencers = (cell, x, y) => {
 	for (let i = 0; i < NEIGHBOURHOODS.length; i++) {
 		const neighbourhood = NEIGHBOURHOODS[i]
 		for (const [nx, ny] of neighbourhood) {
-			const [ix, iy] = [x + nx, y + ny]
-			if (ix >= WORLD_WIDTH) continue
-			if (iy >= WORLD_HEIGHT) continue
+			let [ix, iy] = [x + nx, y + ny]
+			if (ix >= WORLD_WIDTH) ix -= WORLD_WIDTH
+			if (iy >= WORLD_HEIGHT) iy -= WORLD_HEIGHT
+			if (ix < 0) ix += WORLD_WIDTH
+			if (iy < 0) iy += WORLD_HEIGHT
 			const influencer = getCell(ix, iy)
 			influencer.influencees[i].push(cell)
 		}
@@ -108,32 +128,72 @@ const getCell = (x, y) => {
 	return cell
 }
 
+const setCell = (context, cell, x, y, value, doItNow = false) => {
+	if (cell.value === value) return
+
+	const dvalue = value === 1? 1 : -1
+
+	const scoreIndex = doItNow? global.currentScoreIndex : global.nextScoreIndex
+
+	for (let i = 0; i < NEIGHBOURHOODS.length; i++) {
+		const influencees = cell.influencees[i]
+		const weight = global.weights[i]
+		const dweightedValue = weight * dvalue
+		for (const influencee of influencees) {
+			influencee.scores[scoreIndex] += dweightedValue
+		}
+	}
+
+	cell.value = value
+	drawCell(context, cell, x, y)
+
+}
+
 const updateCursor = (context) => {
-	if (Mouse.Left) {
+	/*if (Mouse.Left || Mouse.Right) {
+
 		const [mx, my] = Mouse.position
 		if (mx === undefined) return
 		if (my === undefined) return
 		
 		const vx = mx / CELL_SIZE
-		if (vx < 0) return
-		if (vx >= WORLD_WIDTH) return
 		const vy = my / CELL_SIZE
-		if (vy < 0) return
-		if (vy >= WORLD_HEIGHT) return
 
 		const [x, y] = [vx, vy].map(v => Math.floor(v))
-		const cell = getCell(x, y)
-		print("Cell", cell)
 
-		cell.value = 1
-		drawCell(context, cell, x, y)
-		//drawWorld(context)
+		for (let bx = -BRUSH_SIZE; bx < BRUSH_SIZE; bx++) {
+			for (let by = -BRUSH_SIZE; by < BRUSH_SIZE; by++) {
+				
+				const [cx, cy] = [x+bx, y+by]
 
-	}
+				if (cx < 0) return
+				if (cx >= WORLD_WIDTH) return
+				if (cy < 0) return
+				if (cy >= WORLD_HEIGHT) return
+
+				const cell = getCell(cx, cy)
+				const value = Mouse.Left
+				setCell(context, cell, cx, cy, value, true)
+			}
+		}
+
+
+	}*/
+}
+
+const updateCell = (context, cell, x, y) => {
+	const nextValue = cell.scores[global.currentScoreIndex] > 0
+	setCell(context, cell, x, y, nextValue)
+
+	/*if (cell.updatedUntil !== global.currentScoreIndex) {
+		cell.scores[global.nextScoreIndex] = cell.scores[global.currentScoreIndex]
+		cell.updatedUntil
+	}*/
+	
 }
 
 const drawCell = (context, cell, x, y) => {
-	context.fillStyle = cell.value === 1? COLOUR_ON : COLOUR_OFF
+	context.fillStyle = cell.value? COLOUR_ON : COLOUR_OFF
 	context.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
 }
 
@@ -150,20 +210,55 @@ const drawWorld = (context) => {
 }
 
 const global = {
+	currentScoreIndex: 0,
+	nextScoreIndex: 1,
 	cells: makeWorld(),
-	weights: NEIGHBOURHOODS.map(() => 0.0),
+	weights: NEIGHBOURHOODS.map(() => Math.random()*2 - 1),
 	show: Show.start({paused: false}),
 }
 
 linkWorld()
 
-global.show.resize = (context) => {
-	drawWorld(context)
+for (let i = 0; i < global.weights.length; i++) {
+	//print(i, global.weights[i].toFixed(3))
 }
 
-global.show.tick = (context) => {
-	updateCursor(context)
+global.show.resize = (context) => {
+	
+	//drawWorld(context)
+	
+	for (let x = 0; x < WORLD_WIDTH; x++) {
+		for (let y = 0; y < WORLD_HEIGHT; y++) {
+			const cell = getCell(x, y)
+			setCell(context, cell, x, y, oneIn(2))
+		}
+	}
 }
+
+global.show.supertick = (context) => {
+
+	updateCursor(context)
+
+	if (global.show.paused) return
+
+	for (let x = 0; x < WORLD_WIDTH; x++) {
+		for (let y = 0; y < WORLD_HEIGHT; y++) {
+			const cell = getCell(x, y)
+			updateCell(context, cell, x, y)
+		}
+	}
+	
+	
+	const a = global.currentScoreIndex
+	const b = global.nextScoreIndex
+	global.currentScoreIndex = b
+	global.nextScoreIndex = a
+
+	
+
+}
+
+on.contextmenu(e => e.preventDefault(), {passive: false})
 
 
 
