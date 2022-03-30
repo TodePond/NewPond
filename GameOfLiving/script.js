@@ -3,12 +3,12 @@
 //=========//
 const world = new Map()
 let t = true
-let brushSize = 5
+let brushSize = 0
 
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 300
+const WORLD_WIDTH = 50
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
 
