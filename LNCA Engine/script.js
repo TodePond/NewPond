@@ -2,7 +2,7 @@
 const COLOUR_ON = Colour.Green
 const COLOUR_OFF = Colour.Blue
 
-const WORLD_WIDTH = 10
+const WORLD_WIDTH = 15
 const WORLD_HEIGHT = 10
 
 const CELL_SIZE = 20
@@ -100,10 +100,10 @@ const linkWorld = () => {
 }
 
 const getCell = (x, y) => {
-	const index = y * WORLD_WIDTH + x
+	const index = x * WORLD_HEIGHT + y
 	const cell = global.cells[index]
 	if (cell === undefined) {
-		console.error(`[LNCA] Can't find cell at`, y, x)
+		console.error(`[LNCA] Can't find cell at`, x, y)
 	}
 	return cell
 }
@@ -116,28 +116,34 @@ const updateCursor = (context) => {
 		
 		const vx = mx / CELL_SIZE
 		if (vx < 0) return
-		if (vx > WORLD_WIDTH) return
+		if (vx >= WORLD_WIDTH) return
 		const vy = my / CELL_SIZE
 		if (vy < 0) return
-		if (vy > WORLD_HEIGHT) return
+		if (vy >= WORLD_HEIGHT) return
 
-		const [x, y] = [vy, vx].map(v => Math.floor(v))
+		const [x, y] = [vx, vy].map(v => Math.floor(v))
 		const cell = getCell(x, y)
 		print("Cell", cell)
-		
+
 		cell.value = 1
-		drawWorld(context)
+		drawCell(context, cell, x, y)
+		//drawWorld(context)
 
 	}
+}
+
+const drawCell = (context, cell, x, y) => {
+	context.fillStyle = cell.value === 1? COLOUR_ON : COLOUR_OFF
+	context.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
 }
 
 const drawWorld = (context) => {
 	let index = 0
 	for (let x = 0; x < WORLD_WIDTH; x++) {
 		for (let y = 0; y < WORLD_HEIGHT; y++) {
+			
 			const cell = global.cells[index]
-			context.fillStyle = cell.value === 1? COLOUR_ON : COLOUR_OFF
-			context.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+			drawCell(context, cell, x, y)
 			index++
 		}
 	}
@@ -151,11 +157,12 @@ const global = {
 
 linkWorld()
 
-global.show.tick = (context) => {
-	
-	updateCursor(context)
+global.show.resize = (context) => {
 	drawWorld(context)
-	
+}
+
+global.show.tick = (context) => {
+	updateCursor(context)
 }
 
 
