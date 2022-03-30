@@ -1,32 +1,36 @@
 
-const CODE_LENGTH = 10
-const NEIGHBOURHOOD_SIZE = 7
+const CODE_LENGTH = 6
+const NEIGHBOURHOOD_SIZE = 5
 const NEIGHBOURHOOD_COUNT = parseInt(["1"].repeat(CODE_LENGTH).join(""), 2) + 1
-const CELL_SIZE = 4
-const MARGIN = 4
+const CELL_SIZE = 20
+const MARGIN = CELL_SIZE
 
 const NEIGHBOURHOOD_MAP = [
 
-	0, 1, 3, 6, 3, 1, 0,
+	/*0, 1, 0,
+	1, 2, 1,
+	0, 1, 0,*/
+
+	0, 1, 3, 1, 0,
+	1, 2, 4, 2, 1,
+	3, 4, 5, 4, 3,
+	1, 2, 4, 2, 1,
+	0, 1, 3, 1, 0,
+
+	/*0, 1, 3, 6, 3, 1, 0,
 	1, 2, 4, 7, 4, 2, 1, 
 	3, 4, 5, 8, 5, 4, 3, 
 	6, 7, 8, 9, 8, 7, 6,
 	3, 4, 5, 8, 5, 4, 3,
 	1, 2, 4, 7, 4, 2, 1,
-	0, 1, 3, 6, 3, 1, 0,
-
-	/*0, 1, 3, 1, 0,
-	1, 2, 4, 2, 1,
-	3, 4, 5, 4, 3,
-	1, 2, 4, 2, 1,
-	0, 1, 3, 1, 0,*/
+	0, 1, 3, 6, 3, 1, 0,*/
 ]
 
 const global = {
 	currentNeighbourhood: 0,
 	currentX: MARGIN,
 	currentY: MARGIN,
-	show: Show.start(),
+	show: Show.start({paused: true}),
 }
 
 const drawNeighbourhood = (context, neighbourhood, offsetX, offsetY) => {
