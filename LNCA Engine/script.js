@@ -2,8 +2,8 @@
 const COLOUR_ON = Colour.Green
 const COLOUR_OFF = Colour.Blue
 
-const WORLD_WIDTH = 40
-const WORLD_HEIGHT = 40
+const WORLD_WIDTH = 10
+const WORLD_HEIGHT = 10
 
 const CELL_SIZE = 20
 const VIEW_WIDTH = WORLD_WIDTH * CELL_SIZE
@@ -30,28 +30,36 @@ const NEIGHBOURHOOD_EXPANDED_CODES = NEIGHBOURHOOD_CODES.map(code => {
 	}).join("")
 })
 
-const makeCell = () => {
-	const value = Random.Uint8 % 2
-	const scores = NEIGHBOURHOOD_CODES.map(() => 0)
-	const influences = NEIGHBOURHOOD_CODES.map(() => [])
-	const cell = {value, scores, influences}
-	return cell
-}
-
-const linkInfluences = (cells) => {
+const NEIGHBOURHOODS = NEIGHBOURHOOD_EXPANDED_CODES.map(code => {
+	const positions = []
 	let index = 0
-	for (let x = 0; x < WORLD_WIDTH; x++) {
-		for (let y = 0; y < WORLD_HEIGHT; y++) {
-
+	for (let x = 0; x < NEIGHBOURHOOD_SIZE; x++) {
+		for (let y = 0; y < NEIGHBOURHOOD_SIZE; y++) {
+			const value = code[index]
+			if (value === "1") positions.push([x, y])
 			index++
 		}
 	}
+	return positions
+})
+
+const printNeighbourhoods = () => {
+	print(
+		NEIGHBOURHOODS.map(n => {
+			return n.map(([x, y]) => {
+				return `(${x}, ${y})`
+			}).join(", ")
+		}).join("\n")
+	)
 }
 
-const linkInfluencers = (cell, x, y, cells) => {
-	for (let i = 0; i < NEIGHBOURHOOD_EXPANDED_CODES.length; i++) {
-		
-	}
+const makeCell = () => {
+	const value = 0 //Random.Uint8 % 2
+	const scores = NEIGHBOURHOODS.map(() => 0)
+	const score = 0
+	const influencees = NEIGHBOURHOODS.map(() => [])
+	const cell = {value, score, scores, influencees}
+	return cell
 }
 
 const makeWorld = () => {
@@ -62,22 +70,42 @@ const makeWorld = () => {
 			cells.push(cell)
 		}
 	}
-	
+	return cells
+}
+
+const linkInfluencers = (cell, x, y) => {
+	for (let i = 0; i < NEIGHBOURHOODS.length; i++) {
+		const neighbourhood = NEIGHBOURHOODS[i]
+		for (const [nx, ny] of neighbourhood) {
+			const [ix, iy] = [x + nx, y + ny]
+			if (ix >= WORLD_WIDTH) continue
+			if (iy >= WORLD_HEIGHT) continue
+			const influencer = getCell(ix, iy)
+			influencer.influencees[i].push(cell)
+		}
+	}
+}
+
+const linkWorld = () => {
+
 	let index = 0
 	for (let x = 0; x < WORLD_WIDTH; x++) {
 		for (let y = 0; y < WORLD_HEIGHT; y++) {
-			const cell = cells[index]
-			linkInfluencers(cell, x, y, cells)
+			const cell = global.cells[index]
+			linkInfluencers(cell, x, y)
 			index++
 		}
 	}
 
-	return cells
 }
 
 const getCell = (x, y) => {
-	const index = x * WORLD_WIDTH + y
-	return global.cells[index]
+	const index = y * WORLD_WIDTH + x
+	const cell = global.cells[index]
+	if (cell === undefined) {
+		console.error(`[LNCA] Can't find cell at`, y, x)
+	}
+	return cell
 }
 
 const updateCursor = (context) => {
@@ -96,6 +124,9 @@ const updateCursor = (context) => {
 		const [x, y] = [vy, vx].map(v => Math.floor(v))
 		const cell = getCell(x, y)
 		print("Cell", cell)
+		
+		cell.value = 1
+		drawWorld(context)
 
 	}
 }
@@ -114,8 +145,11 @@ const drawWorld = (context) => {
 
 const global = {
 	cells: makeWorld(),
+	weights: NEIGHBOURHOODS.map(() => 0.0),
 	show: Show.start({paused: false}),
 }
+
+linkWorld()
 
 global.show.tick = (context) => {
 	

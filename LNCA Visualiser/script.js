@@ -30,7 +30,7 @@ const global = {
 	currentNeighbourhood: 0,
 	currentX: MARGIN,
 	currentY: MARGIN,
-	show: Show.start({paused: true, speed: 0.5}),
+	show: Show.start({paused: false, speed: 0.5}),
 }
 
 const drawNeighbourhood = (context, neighbourhood, offsetX, offsetY) => {
