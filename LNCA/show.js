@@ -35,11 +35,11 @@ const Show = {}
 		
 		const resize = () => {
 
-			const size = Math.min(innerWidth, innerHeight)
 			const margin = `${(100 - show.scale*100)/2}` + (innerWidth > innerHeight? "vh" : "vw")
 
-			show.canvas.width = Math.round(size * show.scale)
-			show.canvas.height = Math.round(size * show.scale)
+
+			show.canvas.width = Math.round(innerWidth * show.scale)
+			show.canvas.height = Math.round(innerHeight * show.scale)
 			show.canvas.style["width"] = show.canvas.width
 			show.canvas.style["height"] = show.canvas.height
 			
