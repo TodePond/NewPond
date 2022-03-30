@@ -30,7 +30,7 @@ const global = {
 	currentNeighbourhood: 0,
 	currentX: MARGIN,
 	currentY: MARGIN,
-	show: Show.start({paused: true}),
+	show: Show.start({paused: true, speed: 0.5}),
 }
 
 const drawNeighbourhood = (context, neighbourhood, offsetX, offsetY) => {
@@ -53,6 +53,13 @@ const drawNeighbourhood = (context, neighbourhood, offsetX, offsetY) => {
 }
 
 global.show.tick = (context) => {
+
+	/*if (global.currentNeighbourhood >= NEIGHBOURHOOD_COUNT) {
+		global.currentNeighbourhood = 0
+	} 
+	drawNeighbourhood(context, global.currentNeighbourhood, global.currentX, global.currentY)
+	global.currentNeighbourhood++
+	*/
 
 	if (global.currentNeighbourhood >= NEIGHBOURHOOD_COUNT) return 
 	drawNeighbourhood(context, global.currentNeighbourhood, global.currentX, global.currentY)

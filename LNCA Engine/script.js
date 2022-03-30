@@ -39,7 +39,19 @@ const makeCell = () => {
 }
 
 const linkInfluences = (cells) => {
-	//todo
+	let index = 0
+	for (let x = 0; x < WORLD_WIDTH; x++) {
+		for (let y = 0; y < WORLD_HEIGHT; y++) {
+
+			index++
+		}
+	}
+}
+
+const linkInfluencers = (cell, x, y, cells) => {
+	for (let i = 0; i < NEIGHBOURHOOD_EXPANDED_CODES.length; i++) {
+		
+	}
 }
 
 const makeWorld = () => {
@@ -50,8 +62,16 @@ const makeWorld = () => {
 			cells.push(cell)
 		}
 	}
+	
+	let index = 0
+	for (let x = 0; x < WORLD_WIDTH; x++) {
+		for (let y = 0; y < WORLD_HEIGHT; y++) {
+			const cell = cells[index]
+			linkInfluencers(cell, x, y, cells)
+			index++
+		}
+	}
 
-	linkInfluences(cells)
 	return cells
 }
 
