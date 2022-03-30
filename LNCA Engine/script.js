@@ -18,10 +18,10 @@ const COLOUR_ON = COLOURS[Random.Uint8 % COLOURS.length]
 COLOURS = COLOURS.filter(c => c !== COLOUR_ON)
 const COLOUR_OFF = COLOURS[Random.Uint8 % COLOURS.length]
 
-const WORLD_WIDTH = 128
-const WORLD_HEIGHT = 128
+const WORLD_WIDTH = 100
+const WORLD_HEIGHT = 100
 
-const CELL_SIZE = 6
+const CELL_SIZE = 10
 const VIEW_WIDTH = WORLD_WIDTH * CELL_SIZE
 const VIEW_HEIGHT = WORLD_HEIGHT * CELL_SIZE
 
@@ -131,7 +131,7 @@ const getCell = (x, y) => {
 const setCell = (context, cell, x, y, value, doItNow = false) => {
 	if (cell.value === value) return
 
-	const dvalue = value === 1? 1 : -1
+	const dvalue = value? 1 : -1
 
 	const scoreIndex = doItNow? global.currentScoreIndex : global.nextScoreIndex
 
@@ -150,7 +150,7 @@ const setCell = (context, cell, x, y, value, doItNow = false) => {
 }
 
 const updateCursor = (context) => {
-	/*if (Mouse.Left || Mouse.Right) {
+	if (Mouse.Left || Mouse.Right) {
 
 		const [mx, my] = Mouse.position
 		if (mx === undefined) return
@@ -178,12 +178,12 @@ const updateCursor = (context) => {
 		}
 
 
-	}*/
+	}
 }
 
 const updateCell = (context, cell, x, y) => {
 	const nextValue = cell.scores[global.currentScoreIndex] > 0
-	setCell(context, cell, x, y, nextValue)
+	setCell(context, cell, x, y, nextValue, true)
 
 	/*if (cell.updatedUntil !== global.currentScoreIndex) {
 		cell.scores[global.nextScoreIndex] = cell.scores[global.currentScoreIndex]
@@ -213,8 +213,8 @@ const global = {
 	currentScoreIndex: 0,
 	nextScoreIndex: 1,
 	cells: makeWorld(),
-	weights: NEIGHBOURHOODS.map(() => Math.random()*2 - 1),
-	show: Show.start({paused: false}),
+	weights: NEIGHBOURHOODS.map(() => Math.random() * 4 - 2),
+	show: Show.start({paused: true}),
 }
 
 linkWorld()
@@ -225,7 +225,7 @@ for (let i = 0; i < global.weights.length; i++) {
 
 global.show.resize = (context) => {
 	
-	//drawWorld(context)
+	drawWorld(context)
 	
 	for (let x = 0; x < WORLD_WIDTH; x++) {
 		for (let y = 0; y < WORLD_HEIGHT; y++) {
