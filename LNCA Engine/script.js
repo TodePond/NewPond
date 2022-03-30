@@ -1,65 +1,109 @@
 
+const COLOUR_ON = Colour.Green
+const COLOUR_OFF = Colour.Blue
+
+const WORLD_WIDTH = 40
+const WORLD_HEIGHT = 40
+
+const CELL_SIZE = 20
+const VIEW_WIDTH = WORLD_WIDTH * CELL_SIZE
+const VIEW_HEIGHT = WORLD_HEIGHT * CELL_SIZE
+
 const CODE_LENGTH = 6
 const NEIGHBOURHOOD_SIZE = 5
-const NEIGHBOURHOOD_COUNT = parseInt(["1"].repeat(CODE_LENGTH).join(""), 2) + 1
-const CELL_SIZE = 20
-const MARGIN = CELL_SIZE
-
+const NEIGHBOURHOOD_COUNT = 64
 const NEIGHBOURHOOD_MAP = [
-
-	/*0, 1, 0,
-	1, 2, 1,
-	0, 1, 0,*/
-
 	0, 1, 3, 1, 0,
 	1, 2, 4, 2, 1,
 	3, 4, 5, 4, 3,
 	1, 2, 4, 2, 1,
 	0, 1, 3, 1, 0,
-
-	/*0, 1, 3, 6, 3, 1, 0,
-	1, 2, 4, 7, 4, 2, 1, 
-	3, 4, 5, 8, 5, 4, 3, 
-	6, 7, 8, 9, 8, 7, 6,
-	3, 4, 5, 8, 5, 4, 3,
-	1, 2, 4, 7, 4, 2, 1,
-	0, 1, 3, 6, 3, 1, 0,*/
 ]
 
-const global = {
-	currentNeighbourhood: 0,
-	currentX: MARGIN,
-	currentY: MARGIN,
-	show: Show.start({paused: true}),
+const NEIGHBOURHOOD_CODES = [...(0).to(NEIGHBOURHOOD_COUNT-1)].map(i => {
+	return i.toString(2).padStart(CODE_LENGTH, "0")
+})
+
+const NEIGHBOURHOOD_EXPANDED_CODES = NEIGHBOURHOOD_CODES.map(code => {
+	return NEIGHBOURHOOD_MAP.map(digit => {
+		return code[digit]
+	}).join("")
+})
+
+const makeCell = () => {
+	const value = Random.Uint8 % 2
+	const scores = NEIGHBOURHOOD_CODES.map(() => 0)
+	const influences = NEIGHBOURHOOD_CODES.map(() => [])
+	const cell = {value, scores, influences}
+	return cell
 }
 
-const drawNeighbourhood = (context, neighbourhood, offsetX, offsetY) => {
+const linkInfluences = (cells) => {
+	//todo
+}
 
-	const cells = neighbourhood.toString(2, CODE_LENGTH).split("").map(c => parseInt(c))
-	let i = 0
-	for (let x = 0; x < NEIGHBOURHOOD_SIZE; x++) {
-		for (let y = 0; y < NEIGHBOURHOOD_SIZE; y++) {
-			const id = NEIGHBOURHOOD_MAP[i]
-			const cell = cells[id]
-			context.fillStyle = cell === 1? Colour.Blue : Colour.White
+const makeWorld = () => {
+	const cells = []
+	for (let x = 0; x < WORLD_WIDTH; x++) {
+		for (let y = 0; y < WORLD_HEIGHT; y++) {
+			const cell = makeCell()
+			cells.push(cell)
+		}
+	}
 
-			const X = x * CELL_SIZE + offsetX
-			const Y = y * CELL_SIZE + offsetY
+	linkInfluences(cells)
+	return cells
+}
 
-			context.fillRect(X, Y, CELL_SIZE, CELL_SIZE)
-			i++
+const getCell = (x, y) => {
+	const index = x * WORLD_WIDTH + y
+	return global.cells[index]
+}
+
+const updateCursor = (context) => {
+	if (Mouse.Left) {
+		const [mx, my] = Mouse.position
+		if (mx === undefined) return
+		if (my === undefined) return
+		
+		const vx = mx / CELL_SIZE
+		if (vx < 0) return
+		if (vx > WORLD_WIDTH) return
+		const vy = my / CELL_SIZE
+		if (vy < 0) return
+		if (vy > WORLD_HEIGHT) return
+
+		const [x, y] = [vy, vx].map(v => Math.floor(v))
+		const cell = getCell(x, y)
+		print("Cell", cell)
+
+	}
+}
+
+const drawWorld = (context) => {
+	let index = 0
+	for (let x = 0; x < WORLD_WIDTH; x++) {
+		for (let y = 0; y < WORLD_HEIGHT; y++) {
+			const cell = global.cells[index]
+			context.fillStyle = cell.value === 1? COLOUR_ON : COLOUR_OFF
+			context.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+			index++
 		}
 	}
 }
 
-global.show.tick = (context) => {
-
-	if (global.currentNeighbourhood >= NEIGHBOURHOOD_COUNT) return 
-	drawNeighbourhood(context, global.currentNeighbourhood, global.currentX, global.currentY)
-	global.currentNeighbourhood++
-	global.currentX += CELL_SIZE * NEIGHBOURHOOD_SIZE + MARGIN
-	if (global.currentX >= context.canvas.width - CELL_SIZE*NEIGHBOURHOOD_SIZE - MARGIN) {
-		global.currentX = MARGIN
-		global.currentY += CELL_SIZE * NEIGHBOURHOOD_SIZE + MARGIN
-	}
+const global = {
+	cells: makeWorld(),
+	show: Show.start({paused: false}),
 }
+
+global.show.tick = (context) => {
+	
+	updateCursor(context)
+	drawWorld(context)
+	
+}
+
+
+
+
