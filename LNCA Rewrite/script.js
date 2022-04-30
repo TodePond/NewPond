@@ -25,6 +25,7 @@ const COLOUR_DEAD = COLOURS[Random.Uint8 % COLOURS.length]
 // GLOBALS //
 //=========//
 const world = new Map()
+const show = Show.start()
 let t = true
 let brushSize = 10
 
@@ -52,16 +53,9 @@ const NEIGHBOURHOOD = [
 
 ]
 
-//===============//
-// WORLD HELPERS //
-//===============//
-const getCellKey = (x, y) => `${x},${y}`
-const getCellPosition = (key) => key.split(",").map(n => parseInt(n))
-const getElementKey = () => t? "elementTick" : "elementTock"
-const getNextElementKey = () => t? "elementTock" : "elementTick"
-const getScoreKey = () => t? "scoreTick" : "scoreTock"
-const getNextScoreKey = () => t? "scoreTock" : "scoreTick"
-
+//======//
+// CELL //
+//======//
 const makeCell = (x, y) => {
 	const cell = {
 		x,
@@ -75,6 +69,13 @@ const makeCell = (x, y) => {
 	return cell
 }
 
+const getCellKey = (x, y) => `${x},${y}`
+const getCellPosition = (key) => key.split(",").map(n => parseInt(n))
+const getElementKey = () => t? "elementTick" : "elementTock"
+const getNextElementKey = () => t? "elementTock" : "elementTick"
+const getScoreKey = () => t? "scoreTick" : "scoreTock"
+const getNextScoreKey = () => t? "scoreTock" : "scoreTick"
+
 const linkCell = (cell) => {
 	for (const [nx, ny] of NEIGHBOURHOOD) {
 		let [x, y] = [cell.x + nx, cell.y + ny]
@@ -85,19 +86,6 @@ const linkCell = (cell) => {
 		const key = getCellKey(x, y)
 		const neighbour = world.get(key)
 		cell.neighbours.push(neighbour)
-	}
-}
-
-const makeElement = ({colour, behave} = {}) => {
-	const element = {colour, behave}
-	return element
-}
-
-const drawWorld = (context) => {
-	context.fillStyle = ELEMENT_DEAD.colour
-	context.fillRect(0, 0, context.canvas.width, context.canvas.height)
-	for (const cell of world.values()) {
-		drawCell(context, cell)
 	}
 }
 
@@ -133,7 +121,7 @@ const changeCell = (context, cell, element) => {
 
 }
 
-const keepCell = (context, cell) => {
+const keepCell = (cell) => {
 	const elementKey = getElementKey()
 	const nextElementKey = getNextElementKey()
 
@@ -148,12 +136,11 @@ const keepCell = (context, cell) => {
 			neighbour[nextScoreKey] += dscore
 		}
 	}
-
-	/*const scoreKey = getScoreKey()
-	const nextScoreKey = getNextScoreKey()
-	cell[nextScoreKey] = cell[scoreKey]*/
 }
 
+//=======//
+// BRUSH //
+//=======//
 const paint = (context, alive = true) => {
 	const {canvas} = context
 	const [mx, my] = Mouse.position
@@ -179,21 +166,23 @@ const place = (context, x, y, alive) => {
 	const target = alive? ELEMENT_ALIVE : ELEMENT_DEAD
 	if (cell[getElementKey()] !== target) {
 		changeCell(context, cell, target)
+	} else {
+		keepCell(cell)
+		drawCell(context, cell)
 	}
 }
 
 //==========//
 // ELEMENTS //
 //==========//
+const makeElement = ({colour, behave} = {}) => {
+	const element = {colour, behave}
+	return element
+}
+
 const getCellScore = (cell) => {
 	const scoreKey = getScoreKey()
 	return cell[scoreKey]
-	const elementKey = getElementKey()
-	let score = 0
-	for (const neighbour of cell.neighbours) {
-		if (neighbour[elementKey] === ELEMENT_ALIVE) score++
-	}
-	return score
 }
 
 const ELEMENT_DEAD = makeElement({
@@ -201,7 +190,7 @@ const ELEMENT_DEAD = makeElement({
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score >= 3 && score <= 3) changeCell(context, cell, ELEMENT_ALIVE)
-		else keepCell(context, cell)
+		else keepCell(cell)
 	}
 })
 
@@ -210,13 +199,21 @@ const ELEMENT_ALIVE = makeElement({
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score < 2 || score > 3) changeCell(context, cell, ELEMENT_DEAD)
-		else keepCell(context, cell)
+		else keepCell(cell)
 	}
 })
 
-//=============//
-// SETUP WORLD //
-//=============//
+//=======//
+// WORLD //
+//=======//
+const drawWorld = (context) => {
+	context.fillStyle = ELEMENT_DEAD.colour
+	context.fillRect(0, 0, context.canvas.width, context.canvas.height)
+	for (const cell of world.values()) {
+		drawCell(context, cell)
+	}
+}
+
 for (const x of (0).to(WORLD_WIDTH-1)) {
 	for (const y of (0).to(WORLD_HEIGHT-1)) {
 		const cell = makeCell(x, y)
@@ -232,8 +229,6 @@ for (const cell of world.values()) {
 //======//
 // SHOW //
 //======//
-const show = Show.start({speed: 1.0})
-
 show.resize = (context) => {
 	drawWorld(context)
 }
