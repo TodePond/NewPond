@@ -104,15 +104,11 @@ const drawCell = (context, cell) => {
 
 const setCell = (context, cell, element) => {
 	
-	const elementKey = getElementKey()
 	const nextElementKey = getNextElementKey()
-	
-	const currentElement = cell[elementKey]
 	const oldElement = cell[nextElementKey]
-	const newElement = element
 
-	cell[nextElementKey] = newElement
-	if (newElement !== oldElement) {
+	cell[nextElementKey] = element
+	if (element !== oldElement) {
 		const nextScoreKey = getNextScoreKey()
 		const dscore = element === ELEMENT_ALIVE? 1 : -1
 		for (const neighbour of cell.neighbours) {
@@ -120,7 +116,7 @@ const setCell = (context, cell, element) => {
 		}
 	}
 
-	if (cell.drawnElement !== newElement) {
+	if (cell.drawnElement !== element) {
 		drawCell(context, cell)
 	}
 
