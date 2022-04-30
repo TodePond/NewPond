@@ -65,6 +65,7 @@ const makeCell = (x, y) => {
 		neighbours: [],
 		scoreTick: 0,
 		scoreTock: 0,
+		drawnElement: ELEMENT_DEAD,
 	}
 	return cell
 }
@@ -97,45 +98,32 @@ const drawCell = (context, cell) => {
 	const nextElementKey = getNextElementKey()
 	const element = cell[nextElementKey]
 	context.fillStyle = element.colour
-	/*const padding = 1.2
-	const xpadding = (width*padding - width)/2
-	const ypadding = (height*padding - height)/2*/
 	context.fillRect(...[x, y, width, height].map(n => Math.round(n)))
+	cell.drawnElement = element
 }
 
-const changeCell = (context, cell, element) => {
+const setCell = (context, cell, element) => {
 	
+	const elementKey = getElementKey()
 	const nextElementKey = getNextElementKey()
+	
+	const currentElement = cell[elementKey]
 	const oldElement = cell[nextElementKey]
-	cell[nextElementKey] = element
+	const newElement = element
 
-	if (element !== oldElement) {
+	cell[nextElementKey] = newElement
+	if (newElement !== oldElement) {
 		const nextScoreKey = getNextScoreKey()
 		const dscore = element === ELEMENT_ALIVE? 1 : -1
 		for (const neighbour of cell.neighbours) {
 			neighbour[nextScoreKey] += dscore
 		}
 	}
-	
-	drawCell(context, cell)
 
-}
-
-const keepCell = (cell) => {
-	const elementKey = getElementKey()
-	const nextElementKey = getNextElementKey()
-
-	const oldElement = cell[nextElementKey]
-	const newElement = cell[elementKey]
-	cell[nextElementKey] = cell[elementKey]
-
-	if (newElement !== oldElement) {
-		const nextScoreKey = getNextScoreKey()
-		const dscore = newElement === ELEMENT_ALIVE? 1 : -1
-		for (const neighbour of cell.neighbours) {
-			neighbour[nextScoreKey] += dscore
-		}
+	if (cell.drawnElement !== newElement) {
+		drawCell(context, cell)
 	}
+
 }
 
 //=======//
@@ -164,12 +152,7 @@ const place = (context, x, y, alive) => {
 	const key = getCellKey(x, y)
 	const cell = world.get(key)
 	const target = alive? ELEMENT_ALIVE : ELEMENT_DEAD
-	if (cell[getElementKey()] !== target) {
-		changeCell(context, cell, target)
-	} else {
-		keepCell(cell)
-		drawCell(context, cell)
-	}
+	setCell(context, cell, target)
 }
 
 //==========//
@@ -189,8 +172,8 @@ const ELEMENT_DEAD = makeElement({
 	colour: COLOUR_DEAD,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
-		if (score >= 3 && score <= 3) changeCell(context, cell, ELEMENT_ALIVE)
-		else keepCell(cell)
+		if (score >= 3 && score <= 3) setCell(context, cell, ELEMENT_ALIVE)
+		else setCell(context, cell, ELEMENT_DEAD)
 	}
 })
 
@@ -198,8 +181,8 @@ const ELEMENT_ALIVE = makeElement({
 	colour: COLOUR_ALIVE,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
-		if (score < 2 || score > 3) changeCell(context, cell, ELEMENT_DEAD)
-		else keepCell(cell)
+		if (score < 2 || score > 3) setCell(context, cell, ELEMENT_DEAD)
+		else setCell(context, cell, ELEMENT_ALIVE)
 	}
 })
 
