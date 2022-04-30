@@ -17,9 +17,12 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_ALIVE = COLOURS[Random.Uint8 % COLOURS.length]
-COLOURS = COLOURS.filter(c => c !== COLOUR_ALIVE)
-const COLOUR_DEAD = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_ALIVE_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_ALIVE_OBJ)
+const COLOUR_DEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+
+const COLOUR_ALIVE = [COLOUR_ALIVE_OBJ.r, COLOUR_ALIVE_OBJ.g, COLOUR_ALIVE_OBJ.b, 255]
+const COLOUR_DEAD = [COLOUR_DEAD_OBJ.r, COLOUR_DEAD_OBJ.g, COLOUR_DEAD_OBJ.b, 255]
 
 //=========//
 // GLOBALS //
@@ -35,7 +38,7 @@ let brushSize = 10
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 1080 / 4
+const WORLD_WIDTH = 1080 / 2
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
 
@@ -105,10 +108,30 @@ const drawCell = (context, cell) => {
 
 	const width = context.canvas.width / WORLD_WIDTH
 	const height = context.canvas.height / WORLD_HEIGHT
-	const x = cell.x * width
-	const y = cell.y * height
-	context.fillStyle = element.colour
-	context.fillRect(x, y, width, height)
+
+	let offset = cell.offset
+	let dx = 0
+
+	const data = show.imageData.data
+
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			data[offset] = element.colour[0]
+			data[offset+1] = element.colour[1]
+			data[offset+2] = element.colour[2]
+			data[offset+3] = element.colour[3]
+			offset += 4
+			dx += 4
+		}
+		offset -= dx
+		dx = 0
+		offset += context.canvas.width * 4
+	}
+
+	//const x = cell.x * width
+	//const y = cell.y * height
+	//context.fillStyle = element.colour
+	//context.fillRect(x, y, width, height)
 
 }
 
@@ -214,6 +237,25 @@ const drawWorld = (context) => {
 	}
 }
 
+
+const getOffset = (context, x, y) => {
+	const cellHeight = context.canvas.height / WORLD_HEIGHT
+	const cellWidth = context.canvas.width / WORLD_WIDTH
+
+	const yPixel = Math.round(y * cellHeight)
+	const xPixel = Math.round(x * cellWidth)
+
+	const pixel = yPixel * context.canvas.width + xPixel
+
+	return pixel * 4
+}
+
+const cacheCellOffsets = (context) => {
+	for (const cell of world.values()) {
+		cell.offset = getOffset(context, cell.x, cell.y)
+	}
+}
+
 for (const x of (0).to(WORLD_WIDTH-1)) {
 	for (const y of (0).to(WORLD_HEIGHT-1)) {
 		const cell = makeCell(x, y)
@@ -230,12 +272,14 @@ for (const cell of world.values()) {
 // SHOW //
 //======//
 show.resize = (context) => {
+	context.fillStyle = COLOUR_DEAD_OBJ
+	context.fillRect(0, 0, context.canvas.width, context.canvas.height)
+	show.imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height)
+	cacheCellOffsets(context)
 	drawWorld(context)
 }
 
 show.tick = (context) => {
-
-	const elementKey = getElementKey()
 	for (const cell of world.values()) {
 		behave(context, cell)
 	}
@@ -253,6 +297,8 @@ show.supertick = (context) => {
 	else if (Mouse.Right) {
 		paint(context, false)
 	}
+
+	context.putImageData(show.imageData, 0, 0)
 
 	t = !t
 	clock++
