@@ -25,16 +25,21 @@ const COLOUR_DEAD = COLOURS[Random.Uint8 % COLOURS.length]
 // GLOBALS //
 //=========//
 const world = new Map()
-const show = Show.start()
+const show = Show.start({speed: 0.5})
+let skip = 1
+let clock = 0
+let isDrawFrame = true
 let t = true
 let brushSize = 10
 
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 540
+const WORLD_WIDTH = 1080 / 4
 const WORLD_HEIGHT = WORLD_WIDTH
 const NEIGHBOURHOOD = [
+
+	[ 0, 0],
 
 	[ 0, 1],
 	[ 0,-1],
@@ -91,31 +96,38 @@ const linkCell = (cell) => {
 }
 
 const drawCell = (context, cell) => {
+
+	if (!isDrawFrame) return
+
+	const nextElementKey = getNextElementKey()
+	const element = cell[nextElementKey]
+	cell.drawnElement = element
+
 	const width = context.canvas.width / WORLD_WIDTH
 	const height = context.canvas.height / WORLD_HEIGHT
 	const x = cell.x * width
 	const y = cell.y * height
-	const nextElementKey = getNextElementKey()
-	const element = cell[nextElementKey]
 	context.fillStyle = element.colour
-	context.fillRect(...[x, y, width, height].map(n => Math.round(n)))
-	cell.drawnElement = element
+	context.fillRect(x, y, width, height)
+
 }
 
-const setCell = (context, cell, element) => {
+const setCell = (context, cell, element, {next = true} = {}) => {
 	
-	const nextElementKey = getNextElementKey()
+	const nextElementKey = next? getNextElementKey() : getElementKey()
 	const oldElement = cell[nextElementKey]
-
 	cell[nextElementKey] = element
+
+	// Update neighbour scores
 	if (element !== oldElement) {
-		const nextScoreKey = getNextScoreKey()
+		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
 		const dscore = element === ELEMENT_ALIVE? 1 : -1
 		for (const neighbour of cell.neighbours) {
 			neighbour[nextScoreKey] += dscore
 		}
 	}
 
+	// Draw
 	if (cell.drawnElement !== element) {
 		drawCell(context, cell)
 	}
@@ -151,11 +163,20 @@ const place = (context, x, y, alive) => {
 	setCell(context, cell, target)
 }
 
+on.keydown(e => {
+	if (e.key === "r") for (const cell of world.values()) {
+		const element = oneIn(2)? ELEMENT_ALIVE : ELEMENT_DEAD
+		setCell(show.context, cell, element, {next: false})
+	} else if (e.key === "c") for (const cell of world.values()) {
+		setCell(show.context, cell, ELEMENT_DEAD, {next: false})
+	}
+})
+
 //==========//
 // ELEMENTS //
 //==========//
-const makeElement = ({colour, behave} = {}) => {
-	const element = {colour, behave}
+const makeElement = ({colour} = {}) => {
+	const element = {colour}
 	return element
 }
 
@@ -164,22 +185,22 @@ const getCellScore = (cell) => {
 	return cell[scoreKey]
 }
 
+const aliveScores = [
+	3, 6, 8, 9
+]
+
+const behave = (context, cell) => {
+	const score = getCellScore(cell)
+	if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
+	else setCell(context, cell, ELEMENT_DEAD)
+}
+
 const ELEMENT_DEAD = makeElement({
 	colour: COLOUR_DEAD,
-	behave: (context, cell) => {
-		const score = getCellScore(cell)
-		if (score >= 3 && score <= 3) setCell(context, cell, ELEMENT_ALIVE)
-		else setCell(context, cell, ELEMENT_DEAD)
-	}
 })
 
 const ELEMENT_ALIVE = makeElement({
 	colour: COLOUR_ALIVE,
-	behave: (context, cell) => {
-		const score = getCellScore(cell)
-		if (score < 2 || score > 3) setCell(context, cell, ELEMENT_DEAD)
-		else setCell(context, cell, ELEMENT_ALIVE)
-	}
 })
 
 //=======//
@@ -216,14 +237,14 @@ show.tick = (context) => {
 
 	const elementKey = getElementKey()
 	for (const cell of world.values()) {
-		const element = cell[elementKey]
-		element.behave(context, cell)
+		behave(context, cell)
 	}
 }
 
 
 show.supertick = (context) => {
 	
+
 	if (show.paused) t = !t
 
 	if (Mouse.Left) {
@@ -234,6 +255,10 @@ show.supertick = (context) => {
 	}
 
 	t = !t
+	clock++
+	if (clock > 255) clock = 0
+	isDrawFrame = clock % skip === 0
+
 }
 
 on.contextmenu(e => e.preventDefault(), {passive: false})
