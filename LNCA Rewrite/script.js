@@ -80,10 +80,11 @@ const printNeighbourhood = (neighbourhoodId) => {
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 1080 / 4
+const WORLD_WIDTH = 1080 / 8
 const WORLD_HEIGHT = WORLD_WIDTH
-const DEFAULT_WEIGHTS = [0].repeat(NEIGHBOURHOOD_COUNT)
-DEFAULT_WEIGHTS[3] = 1
+
+const WEIGHT_SEED_MAX = 1.0
+const WEIGHT_CHOICES = [-1, 0, 1]
 
 //=========//
 // GLOBALS //
@@ -95,10 +96,48 @@ let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 10
+let brushSize = 5
+
+const history = []
+let historyPosition = 0
 
 const weightStorage = localStorage.getItem("weights")
-const weights = weightStorage !== null? weightStorage : DEFAULT_WEIGHTS
+console.log("Loading weights:", weightStorage)
+let weights = weightStorage !== null? weightStorage : [0].repeat(NEIGHBOURHOOD_COUNT)
+weights[3] = 1
+let selectedWeights = [...weights]
+
+//=========//
+// WEIGHTS //
+//=========//
+
+const randomiseWeights = () => {
+	saveHistory()
+	for (let i = 0; i < weights.length; i++) {
+		weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
+	}
+}
+
+//=========//
+// HISTORY //
+//=========//
+const saveHistory = () => {
+	if (historyPosition < history.length-1) {
+		history.splice(historyPosition)
+	}
+	history.push([...weights])
+	historyPosition++
+}
+
+const previousHistory = () => {
+	if (historyPosition > 0) historyPosition--
+	weights = [...history[historyPosition]]
+}
+
+const nextHistory = () => {
+	if (historyPosition < history.length-1) historyPosition++
+	weights = [...history[historyPosition]]
+}
 
 //======//
 // CELL //
@@ -176,11 +215,6 @@ const drawCell = (context, cell) => {
 		offset += context.canvas.width * 4
 	}
 
-	//const x = cell.x * width
-	//const y = cell.y * height
-	//context.fillStyle = element.colour
-	//context.fillRect(x, y, width, height)
-
 }
 
 const setCell = (context, cell, element, {next = true} = {}) => {
@@ -243,14 +277,62 @@ const place = (context, x, y, alive) => {
 	setCell(context, cell, target)
 }
 
+//==========//
+// KEYBOARD //
+//==========//
+const KEYDOWN = {}
 on.keydown(e => {
-	if (e.key === "r") for (const cell of world.values()) {
+	const handler = KEYDOWN[e.key]
+	if (handler === undefined) return
+	handler(e)
+})
+
+
+// Randomise world
+KEYDOWN["r"] = () => {
+	for (const cell of world.values()) {
 		const element = oneIn(2)? ELEMENT_ALIVE : ELEMENT_DEAD
 		setCell(show.context, cell, element, {next: false})
-	} else if (e.key === "c") for (const cell of world.values()) {
+	}
+
+	updateCellScores({next: false})
+}
+
+// Clear world
+KEYDOWN["c"] = () => {
+	for (const cell of world.values()) {
 		setCell(show.context, cell, ELEMENT_DEAD, {next: false})
 	}
-})
+	
+	updateCellScores({next: false})
+}
+
+// mutate Weights
+KEYDOWN["w"] = () => {
+
+}
+
+// Select weights to mutate from
+KEYDOWN["s"] = () => {
+	selectedWeights = [...weights]
+	localStorage.setItem("weights", JSON.stringify(selectedWeights))
+}
+
+// eXterminate weights and make random new ones
+KEYDOWN["x"] = () => {
+	randomiseWeights()
+	updateCellScores({next: false})
+}
+
+// go to previous weights
+KEYDOWN["a"] = () => {
+
+}
+
+// go to next weights
+KEYDOWN["d"] = () => {
+
+}
 
 //==========//
 // ELEMENTS //
@@ -271,6 +353,9 @@ const aliveScores = [
 
 const behave = (context, cell) => {
 	const score = getCellScore(cell)
+	/*const element = score > 0? ELEMENT_ALIVE : ELEMENT_DEAD
+	setCell(context, cell, element)*/
+
 	if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
 	else setCell(context, cell, ELEMENT_DEAD)
 }
@@ -294,7 +379,6 @@ const drawWorld = (context) => {
 	}
 }
 
-
 const getOffset = (context, x, y) => {
 	const cellHeight = context.canvas.height / WORLD_HEIGHT
 	const cellWidth = context.canvas.width / WORLD_WIDTH
@@ -310,6 +394,32 @@ const getOffset = (context, x, y) => {
 const cacheCellOffsets = (context) => {
 	for (const cell of world.values()) {
 		cell.offset = getOffset(context, cell.x, cell.y)
+	}
+}
+
+const updateCellScores = ({next = true} = {}) => {
+
+	const nextElementKey = next? getNextElementKey() : getElementKey()
+	const nextScoreKey = next? getNextScoreKey() : getScoreKey()
+
+	for (const cell of world.values()) {
+		cell[nextScoreKey] = 0
+	}
+
+	for (const cell of world.values()) {
+
+		const score = cell[nextElementKey] === ELEMENT_ALIVE? 1 : 0
+
+		for (let i = 0; i < cell.neighbourhoods.length; i++) {
+			const neighbourhood = cell.neighbourhoods[i]
+			const weight = weights[i]
+			if (weight === 0) continue
+			const change = score * weight
+			if (change === 0) continue
+			for (const neighbour of neighbourhood) {
+				neighbour[nextScoreKey] += change
+			}
+		}
 	}
 }
 
@@ -359,7 +469,7 @@ show.supertick = (context) => {
 
 	t = !t
 	clock++
-	if (clock > Infinity) clock = 0
+	if (clock > 255) clock = 0
 	isDrawFrame = (clock+skipOffset) % skip === 0
 
 }
