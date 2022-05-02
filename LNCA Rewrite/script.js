@@ -24,42 +24,81 @@ const COLOUR_DEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 const COLOUR_ALIVE = [COLOUR_ALIVE_OBJ.r, COLOUR_ALIVE_OBJ.g, COLOUR_ALIVE_OBJ.b, 255]
 const COLOUR_DEAD = [COLOUR_DEAD_OBJ.r, COLOUR_DEAD_OBJ.g, COLOUR_DEAD_OBJ.b, 255]
 
+//===============//
+// NEIGHBOURHOOD //
+//===============//
+const NEIGHBOURHOOD_CODE_LENGTH = 6
+const NEIGHBOURHOOD_SIZE = 5
+const NEIGHBOURHOOD_ORIGIN_OFFSET = 2
+const NEIGHBOURHOOD_COUNT = 64
+const NEIGHBOURHOOD_MAP = [
+	0, 1, 3, 1, 0,
+	1, 2, 4, 2, 1,
+	3, 4, 5, 4, 3,
+	1, 2, 4, 2, 1,
+	0, 1, 3, 1, 0,
+]
+
+const NEIGHBOURHOOD_CODES = [...(0).to(NEIGHBOURHOOD_COUNT-1)].map(i => {
+	return i.toString(2).padStart(NEIGHBOURHOOD_CODE_LENGTH, "0")
+})
+
+const NEIGHBOURHOOD_EXPANDED_CODES = NEIGHBOURHOOD_CODES.map(code => {
+	return NEIGHBOURHOOD_MAP.map(digit => {
+		return code[digit]
+	}).join("")
+})
+
+const NEIGHBOURHOODS = NEIGHBOURHOOD_EXPANDED_CODES.map(code => {
+	const positions = []
+	let index = 0
+	for (let x = 0; x < NEIGHBOURHOOD_SIZE; x++) {
+		for (let y = 0; y < NEIGHBOURHOOD_SIZE; y++) {
+			const value = code[index]
+			if (value === "1") positions.push([x - NEIGHBOURHOOD_ORIGIN_OFFSET, y - NEIGHBOURHOOD_ORIGIN_OFFSET])
+			index++
+		}
+	}
+	return positions
+})
+
+const printNeighbourhoods = () => {
+	print(
+		NEIGHBOURHOODS.map(n => {
+			return n.map(([x, y]) => {
+				return `(${x}, ${y})`
+			}).join(", ")
+		}).join("\n")
+	)
+}
+
+const printNeighbourhood = (neighbourhoodId) => {
+	const neighbourhood = NEIGHBOURHOODS[neighbourhoodId]
+	print(neighbourhood.map(([x, y]) => `(${x}, ${y})`).join(", "))
+}
+
+//========//
+// CONFIG //
+//========//
+const WORLD_WIDTH = 1080 / 4
+const WORLD_HEIGHT = WORLD_WIDTH
+const DEFAULT_WEIGHTS = [0].repeat(NEIGHBOURHOOD_COUNT)
+DEFAULT_WEIGHTS[3] = 1
+
 //=========//
 // GLOBALS //
 //=========//
 const world = new Map()
 const show = Show.start({speed: 0.5})
 let skip = 1
+let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
 let brushSize = 10
 
-//========//
-// CONFIG //
-//========//
-const WORLD_WIDTH = 1080 / 2
-const WORLD_HEIGHT = WORLD_WIDTH
-const NEIGHBOURHOOD = [
-
-	[ 0, 0],
-
-	[ 0, 1],
-	[ 0,-1],
-	[ 1, 0],
-	[-1, 0],
-
-	/*[ 1,-1],
-	[-1,-1],
-	[-1, 1],
-	[ 1, 1],
-
-	[ 2, 0],
-	[ 0,-2],
-	[-2, 0],
-	[ 0, 2],*/
-
-]
+const weightStorage = localStorage.getItem("weights")
+const weights = weightStorage !== null? weightStorage : DEFAULT_WEIGHTS
 
 //======//
 // CELL //
@@ -70,7 +109,7 @@ const makeCell = (x, y) => {
 		y,
 		elementTick: ELEMENT_DEAD,
 		elementTock: ELEMENT_DEAD,
-		neighbours: [],
+		neighbourhoods: [],
 		scoreTick: 0,
 		scoreTock: 0,
 		drawnElement: ELEMENT_DEAD,
@@ -86,16 +125,25 @@ const getScoreKey = () => t? "scoreTick" : "scoreTock"
 const getNextScoreKey = () => t? "scoreTock" : "scoreTick"
 
 const linkCell = (cell) => {
-	for (const [nx, ny] of NEIGHBOURHOOD) {
-		let [x, y] = [cell.x + nx, cell.y + ny]
-		if (x < 0) x += WORLD_WIDTH
-		if (y < 0) y += WORLD_HEIGHT
-		if (x >= WORLD_WIDTH) x -= WORLD_WIDTH
-		if (y >= WORLD_HEIGHT) y -= WORLD_HEIGHT
-		const key = getCellKey(x, y)
-		const neighbour = world.get(key)
-		cell.neighbours.push(neighbour)
+
+	for (const NEIGHBOURHOOD of NEIGHBOURHOODS) {
+
+		const neighbourhood = []
+		cell.neighbourhoods.push(neighbourhood)
+
+		for (const [nx, ny] of NEIGHBOURHOOD) {
+			let [x, y] = [cell.x + nx, cell.y + ny]
+			if (x < 0) x += WORLD_WIDTH
+			if (y < 0) y += WORLD_HEIGHT
+			if (x >= WORLD_WIDTH) x -= WORLD_WIDTH
+			if (y >= WORLD_HEIGHT) y -= WORLD_HEIGHT
+			const key = getCellKey(x, y)
+			const neighbour = world.get(key)
+			neighbourhood.push(neighbour)
+		}
+
 	}
+
 }
 
 const drawCell = (context, cell) => {
@@ -145,9 +193,18 @@ const setCell = (context, cell, element, {next = true} = {}) => {
 	if (element !== oldElement) {
 		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
 		const dscore = element === ELEMENT_ALIVE? 1 : -1
-		for (const neighbour of cell.neighbours) {
-			neighbour[nextScoreKey] += dscore
+
+		for (let i = 0; i < cell.neighbourhoods.length; i++) {
+			const neighbourhood = cell.neighbourhoods[i]
+			const weight = weights[i]
+			if (weight === 0) continue
+			const change = dscore * weight
+			if (change === 0) continue
+			for (const neighbour of neighbourhood) {
+				neighbour[nextScoreKey] += change
+			}
 		}
+
 	}
 
 	// Draw
@@ -302,8 +359,8 @@ show.supertick = (context) => {
 
 	t = !t
 	clock++
-	if (clock > 255) clock = 0
-	isDrawFrame = clock % skip === 0
+	if (clock > Infinity) clock = 0
+	isDrawFrame = (clock+skipOffset) % skip === 0
 
 }
 
