@@ -49,7 +49,7 @@ const NEIGHBOURHOOD = [
 	[ 1, 0],
 	[-1, 0],
 
-	[ 1,-1],
+	/*[ 1,-1],
 	[-1,-1],
 	[-1, 1],
 	[ 1, 1],
@@ -57,7 +57,7 @@ const NEIGHBOURHOOD = [
 	[ 2, 0],
 	[ 0,-2],
 	[-2, 0],
-	[ 0, 2],
+	[ 0, 2],*/
 
 ]
 
@@ -209,7 +209,7 @@ const getCellScore = (cell) => {
 }
 
 const aliveScores = [
-	3, 12
+	1, 3, 5
 ]
 
 const behave = (context, cell) => {
