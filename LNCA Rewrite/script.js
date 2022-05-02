@@ -114,7 +114,8 @@ let selectedWeights = [...weights]
 const randomiseWeights = () => {
 	saveHistory()
 	for (let i = 0; i < weights.length; i++) {
-		weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
+		//weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
+		weights[i] = Math.random() * WEIGHT_SEED_MAX*2 - WEIGHT_SEED_MAX
 	}
 }
 
@@ -163,6 +164,11 @@ const getNextElementKey = () => t? "elementTock" : "elementTick"
 const getScoreKey = () => t? "scoreTick" : "scoreTock"
 const getNextScoreKey = () => t? "scoreTock" : "scoreTick"
 
+// TODO: fix this
+// currently, it works out the CELL's neighbourhoods.
+// instead, we want it to figure out what neighbourhoods it's PART OF, (not the origin of)
+// This issue didn't matter before, because I was only using bi-directional neighbourhoods.
+// But now, some neighbourhoods only apply in one direction
 const linkCell = (cell) => {
 
 	for (const NEIGHBOURHOOD of NEIGHBOURHOODS) {
@@ -294,8 +300,6 @@ KEYDOWN["r"] = () => {
 		const element = oneIn(2)? ELEMENT_ALIVE : ELEMENT_DEAD
 		setCell(show.context, cell, element, {next: false})
 	}
-
-	updateCellScores({next: false})
 }
 
 // Clear world
@@ -303,8 +307,6 @@ KEYDOWN["c"] = () => {
 	for (const cell of world.values()) {
 		setCell(show.context, cell, ELEMENT_DEAD, {next: false})
 	}
-	
-	updateCellScores({next: false})
 }
 
 // mutate Weights
@@ -315,13 +317,13 @@ KEYDOWN["w"] = () => {
 // Select weights to mutate from
 KEYDOWN["s"] = () => {
 	selectedWeights = [...weights]
-	localStorage.setItem("weights", JSON.stringify(selectedWeights))
+	//localStorage.setItem("weights", JSON.stringify(selectedWeights))
 }
 
 // eXterminate weights and make random new ones
 KEYDOWN["x"] = () => {
 	randomiseWeights()
-	updateCellScores({next: false})
+	updateCellScores()
 }
 
 // go to previous weights
@@ -353,11 +355,13 @@ const aliveScores = [
 
 const behave = (context, cell) => {
 	const score = getCellScore(cell)
-	/*const element = score > 0? ELEMENT_ALIVE : ELEMENT_DEAD
-	setCell(context, cell, element)*/
 
 	if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
 	else setCell(context, cell, ELEMENT_DEAD)
+	return
+
+	const element = score > 0? ELEMENT_ALIVE : ELEMENT_DEAD
+	setCell(context, cell, element)
 }
 
 const ELEMENT_DEAD = makeElement({
@@ -397,27 +401,34 @@ const cacheCellOffsets = (context) => {
 	}
 }
 
-const updateCellScores = ({next = true} = {}) => {
+const updateCellScores = () => {
 
-	const nextElementKey = next? getNextElementKey() : getElementKey()
-	const nextScoreKey = next? getNextScoreKey() : getScoreKey()
+	const elementKey = getElementKey()
+	const nextElementKey = getNextElementKey()
+	
+	const scoreKey = getScoreKey()
+	const nextScoreKey = getNextScoreKey()
 
 	for (const cell of world.values()) {
+		cell[scoreKey] = 0
 		cell[nextScoreKey] = 0
 	}
 
 	for (const cell of world.values()) {
 
-		const score = cell[nextElementKey] === ELEMENT_ALIVE? 1 : 0
+		const score = cell[elementKey] === ELEMENT_ALIVE? 1 : 0
+		const nextScore = cell[nextElementKey] === ELEMENT_ALIVE? 1 : 0
 
 		for (let i = 0; i < cell.neighbourhoods.length; i++) {
 			const neighbourhood = cell.neighbourhoods[i]
 			const weight = weights[i]
-			if (weight === 0) continue
+
 			const change = score * weight
-			if (change === 0) continue
+			const nextChange = nextScore * weight
+
 			for (const neighbour of neighbourhood) {
-				neighbour[nextScoreKey] += change
+				neighbour[scoreKey] += change
+				neighbour[nextScoreKey] += nextChange
 			}
 		}
 	}
