@@ -17,12 +17,19 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_ALIVE_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
-COLOURS = COLOURS.filter(c => c !== COLOUR_ALIVE_OBJ)
-const COLOUR_DEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_CABLE_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_CABLE_OBJ)
+const COLOUR_EMPTY_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_EMPTY_OBJ)
+const COLOUR_HEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_HEAD_OBJ)
+const COLOUR_TAIL_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 
-const COLOUR_ALIVE = [COLOUR_ALIVE_OBJ.r, COLOUR_ALIVE_OBJ.g, COLOUR_ALIVE_OBJ.b, 255]
-const COLOUR_DEAD = [COLOUR_DEAD_OBJ.r, COLOUR_DEAD_OBJ.g, COLOUR_DEAD_OBJ.b, 255]
+
+const COLOUR_CABLE = [COLOUR_CABLE_OBJ.r, COLOUR_CABLE_OBJ.g, COLOUR_CABLE_OBJ.b, 255]
+const COLOUR_EMPTY = [COLOUR_EMPTY_OBJ.r, COLOUR_EMPTY_OBJ.g, COLOUR_EMPTY_OBJ.b, 255]
+const COLOUR_HEAD = [COLOUR_HEAD_OBJ.r, COLOUR_HEAD_OBJ.g, COLOUR_HEAD_OBJ.b, 255]
+const COLOUR_TAIL = [COLOUR_TAIL_OBJ.r, COLOUR_TAIL_OBJ.g, COLOUR_TAIL_OBJ.b, 255]
 
 //===============//
 // NEIGHBOURHOOD //
@@ -67,12 +74,12 @@ const makeCell = (x, y) => {
 	const cell = {
 		x,
 		y,
-		elementTick: ELEMENT_DEAD,
-		elementTock: ELEMENT_DEAD,
+		elementTick: ELEMENT_EMPTY,
+		elementTock: ELEMENT_EMPTY,
 		neighbourhood: [],
 		scoreTick: 0,
 		scoreTock: 0,
-		drawnElement: ELEMENT_DEAD,
+		drawnElement: ELEMENT_EMPTY,
 	}
 
 	return cell
@@ -142,7 +149,7 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 	// Update neighbour scores
 	if (update && element !== oldElement) {
 		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
-		const dscore = element === ELEMENT_ALIVE? 1 : -1
+		const dscore = element === ELEMENT_HEAD? 1 : -1
 
 		const neighbourhood = cell.neighbourhood
 		const change = dscore
@@ -183,7 +190,7 @@ const place = (context, x, y, alive) => {
 	if (y >= WORLD_HEIGHT) return
 	const key = getCellKey(x, y)
 	const cell = world.get(key)
-	const target = alive? ELEMENT_ALIVE : ELEMENT_DEAD
+	const target = alive? ELEMENT_HEAD : ELEMENT_EMPTY
 	setCell(context, cell, target)
 }
 
@@ -202,7 +209,7 @@ on.keydown(e => {
 KEYDOWN["r"] = () => {
 	print("...")
 	for (const cell of world.values()) {
-		const element = oneIn(2)? ELEMENT_ALIVE : ELEMENT_DEAD
+		const element = oneIn(2)? ELEMENT_HEAD : ELEMENT_EMPTY
 		setCell(show.context, cell, element, {update: false})
 		setCell(show.context, cell, element, {next: false, update: false})
 	}
@@ -214,8 +221,8 @@ KEYDOWN["r"] = () => {
 KEYDOWN["c"] = () => {
 	print("...")
 	for (const cell of world.values()) {
-		setCell(show.context, cell, ELEMENT_DEAD, {update: false})
-		setCell(show.context, cell, ELEMENT_DEAD, {next: false, update: false})
+		setCell(show.context, cell, ELEMENT_EMPTY, {update: false})
+		setCell(show.context, cell, ELEMENT_EMPTY, {next: false, update: false})
 	}
 	updateCellScores()
 	print("WORLD CLEARED")
@@ -227,8 +234,8 @@ KEYDOWN["2"] = () => skip = 2
 //==========//
 // ELEMENTS //
 //==========//
-const makeElement = ({colour} = {}) => {
-	const element = {colour}
+const makeElement = ({colour, behave = () => {}} = {}) => {
+	const element = {colour, behave}
 	return element
 }
 
@@ -244,27 +251,39 @@ const aliveScores = [
 const behave = (context, cell) => {
 	const score = getCellScore(cell)
 
-	if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
-	else setCell(context, cell, ELEMENT_DEAD)
-	return
+	const elementKey = getElementKey()
+	const element = cell[elementKey]
+	element.behave(cell)
 
-	const element = score > 0? ELEMENT_ALIVE : ELEMENT_DEAD
-	setCell(context, cell, element)
+	/*if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
+	else setCell(context, cell, ELEMENT_DEAD)
+	return*/
+
+	/*const element = score > 0? ELEMENT_ALIVE : ELEMENT_DEAD
+	setCell(context, cell, element)*/
 }
 
-const ELEMENT_DEAD = makeElement({
-	colour: COLOUR_DEAD,
+const ELEMENT_EMPTY = makeElement({
+	colour: COLOUR_EMPTY,
 })
 
-const ELEMENT_ALIVE = makeElement({
-	colour: COLOUR_ALIVE,
+const ELEMENT_CABLE = makeElement({
+	colour: COLOUR_CABLE,
+})
+
+const ELEMENT_HEAD = makeElement({
+	colour: COLOUR_HEAD,
+})
+
+const ELEMENT_TAIL = makeElement({
+	colour: COLOUR_TAIL,
 })
 
 //=======//
 // WORLD //
 //=======//
 const drawWorld = (context) => {
-	context.fillStyle = ELEMENT_DEAD.colour
+	context.fillStyle = COLOUR_EMPTY
 	context.fillRect(0, 0, context.canvas.width, context.canvas.height)
 	for (const cell of world.values()) {
 		drawCell(context, cell)
@@ -304,8 +323,8 @@ const updateCellScores = () => {
 
 	for (const cell of world.values()) {
 
-		const score = cell[elementKey] === ELEMENT_ALIVE? 1 : 0
-		const nextScore = cell[nextElementKey] === ELEMENT_ALIVE? 1 : 0
+		const score = cell[elementKey] === ELEMENT_HEAD? 1 : 0
+		const nextScore = cell[nextElementKey] === ELEMENT_HEAD? 1 : 0
 
 		const neighbourhood = cell.neighbourhood
 
@@ -335,7 +354,7 @@ for (const cell of world.values()) {
 // SHOW //
 //======//
 show.resize = (context) => {
-	context.fillStyle = COLOUR_DEAD_OBJ
+	context.fillStyle = COLOUR_EMPTY_OBJ
 	context.fillRect(0, 0, context.canvas.width, context.canvas.height)
 	show.imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height)
 	cacheCellOffsets(context)
