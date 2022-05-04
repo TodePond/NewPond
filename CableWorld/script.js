@@ -67,7 +67,7 @@ let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 2
+let brushSize = 5
 
 //======//
 // CELL //
