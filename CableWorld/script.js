@@ -24,12 +24,15 @@ COLOURS = COLOURS.filter(c => c !== COLOUR_EMPTY_OBJ)
 const COLOUR_HEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 COLOURS = COLOURS.filter(c => c !== COLOUR_HEAD_OBJ)
 const COLOUR_TAIL_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_HEAD_OBJ)
+const COLOUR_TAIL_TAIL_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 
 
 const COLOUR_CABLE = [COLOUR_CABLE_OBJ.r, COLOUR_CABLE_OBJ.g, COLOUR_CABLE_OBJ.b, 255]
 const COLOUR_EMPTY = [COLOUR_EMPTY_OBJ.r, COLOUR_EMPTY_OBJ.g, COLOUR_EMPTY_OBJ.b, 255]
 const COLOUR_HEAD = [COLOUR_HEAD_OBJ.r, COLOUR_HEAD_OBJ.g, COLOUR_HEAD_OBJ.b, 255]
 const COLOUR_TAIL = [COLOUR_TAIL_OBJ.r, COLOUR_TAIL_OBJ.g, COLOUR_TAIL_OBJ.b, 255]
+const COLOUR_TAIL_TAIL = [COLOUR_TAIL_TAIL_OBJ.r, COLOUR_TAIL_TAIL_OBJ.g, COLOUR_TAIL_TAIL_OBJ.b, 255]
 
 //===============//
 // NEIGHBOURHOOD //
@@ -51,20 +54,20 @@ const NEIGHBOURHOOD = [
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = Math.round(1080 / 8).d
+const WORLD_WIDTH = Math.round(1080 / 4).d
 const WORLD_HEIGHT = WORLD_WIDTH
 
 //=========//
 // GLOBALS //
 //=========//
 const world = new Map()
-const show = Show.start({speed: 0.5})
+const show = Show.start({speed: 1.0})
 let skip = 1
 let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 0
+let brushSize = 2
 
 //======//
 // CELL //
@@ -148,11 +151,18 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 
 	// Update neighbour scores
 	if (update && element !== oldElement) {
-		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
-		const dscore = element === ELEMENT_HEAD? 1 : -1
+
+		let dscore = 0
+		if (oldElement !== ELEMENT_HEAD && element === ELEMENT_HEAD) {
+			dscore = 1
+		} else if (oldElement === ELEMENT_HEAD && element !== ELEMENT_HEAD) {
+			dscore = -1
+		}
+		if (dscore === 0) return
 
 		const neighbourhood = cell.neighbourhood
 		const change = dscore
+		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
 		for (const neighbour of neighbourhood) {
 			neighbour[nextScoreKey] += change
 		}
@@ -168,29 +178,29 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 //=======//
 // BRUSH //
 //=======//
-const paint = (context, alive = true) => {
+const paint = (context, element) => {
 	const {canvas} = context
 	const [mx, my] = Mouse.position
 	const x = Math.floor((mx - canvas.offsetLeft) / canvas.width * WORLD_WIDTH)
 	const y = Math.floor((my - canvas.offsetTop) / canvas.height * WORLD_HEIGHT)
 	for (let px = -brushSize; px < brushSize; px++) {
 		for (let py = -brushSize; py < brushSize; py++) {
-			place(context, x+px, y+py, alive)
+			place(context, x+px, y+py, element)
 		}
 	}
 	if (brushSize === 0) {
-		place(context, x, y, alive)
+		place(context, x, y, element)
 	}
 }
 
-const place = (context, x, y, alive) => {
+const place = (context, x, y, element) => {
 	if (x < 0) return
 	if (y < 0) return
 	if (x >= WORLD_WIDTH) return
 	if (y >= WORLD_HEIGHT) return
 	const key = getCellKey(x, y)
 	const cell = world.get(key)
-	const target = alive? ELEMENT_HEAD : ELEMENT_EMPTY
+	const target = element
 	setCell(context, cell, target)
 }
 
@@ -228,8 +238,9 @@ KEYDOWN["c"] = () => {
 	print("WORLD CLEARED")
 }
 
-KEYDOWN["1"] = () => skip = 1
-KEYDOWN["2"] = () => skip = 2
+KEYDOWN["1"] = () => selectedElement = ELEMENT_CABLE
+KEYDOWN["2"] = () => selectedElement = ELEMENT_HEAD
+KEYDOWN["3"] = () => selectedElement = ELEMENT_TAIL
 
 //==========//
 // ELEMENTS //
@@ -244,16 +255,16 @@ const getCellScore = (cell) => {
 	return cell[scoreKey]
 }
 
-const aliveScores = [
+/*const aliveScores = [
 	1, 3, 5
-]
+]*/
 
 const behave = (context, cell) => {
 	const score = getCellScore(cell)
 
 	const elementKey = getElementKey()
 	const element = cell[elementKey]
-	element.behave(cell)
+	element.behave(context, cell)
 
 	/*if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
 	else setCell(context, cell, ELEMENT_DEAD)
@@ -265,19 +276,55 @@ const behave = (context, cell) => {
 
 const ELEMENT_EMPTY = makeElement({
 	colour: COLOUR_EMPTY,
+	behave: (context, cell) => {
+		setCell(context, cell, ELEMENT_EMPTY)
+	}
 })
 
 const ELEMENT_CABLE = makeElement({
 	colour: COLOUR_CABLE,
+	behave: (context, cell) => {
+		const score = getCellScore(cell)
+		if (score > 0) {
+			setCell(context, cell, ELEMENT_HEAD)
+		} else {
+			setCell(context, cell, ELEMENT_CABLE)
+		}
+	}
 })
 
 const ELEMENT_HEAD = makeElement({
 	colour: COLOUR_HEAD,
+	behave: (context, cell) => {
+		setCell(context, cell, ELEMENT_TAIL)
+	}
 })
 
 const ELEMENT_TAIL = makeElement({
 	colour: COLOUR_TAIL,
+	behave: (context, cell) => {
+		const score = getCellScore(cell)
+		if (score > 0) {
+			setCell(context, cell, ELEMENT_TAIL)
+		} else {
+			setCell(context, cell, ELEMENT_TAIL_TAIL)
+		}
+	}
 })
+
+const ELEMENT_TAIL_TAIL = makeElement({
+	colour: COLOUR_TAIL_TAIL,
+	behave: (context, cell) => {
+		const score = getCellScore(cell)
+		if (score > 0) {
+			setCell(context, cell, ELEMENT_TAIL)
+		} else {
+			setCell(context, cell, ELEMENT_CABLE)
+		}
+	}
+})
+
+let selectedElement = ELEMENT_CABLE
 
 //=======//
 // WORLD //
@@ -367,17 +414,16 @@ show.tick = (context) => {
 	}
 }
 
-
 show.supertick = (context) => {
 	
 
 	if (show.paused) t = !t
 
 	if (Mouse.Left) {
-		paint(context, true)
+		paint(context, selectedElement)
 	}
 	else if (Mouse.Right) {
-		paint(context, false)
+		paint(context, ELEMENT_EMPTY)
 	}
 
 	context.putImageData(show.imageData, 0, 0)
