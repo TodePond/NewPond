@@ -80,7 +80,7 @@ const printNeighbourhood = (neighbourhoodId) => {
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 1080 / 4
+const WORLD_WIDTH = 1080 / 8
 const WORLD_HEIGHT = WORLD_WIDTH
 
 const WEIGHT_SEED_MAX = 2.0
@@ -361,6 +361,13 @@ KEYDOWN["w"] = () => {
 	print("WEIGHTS MUTATED")
 }
 
+KEYDOWN["q"] = () => {
+	print("...")
+	const weightStorage = localStorage.getItem("weights")
+	setWeights(weightStorage !== null? JSON.parse(weightStorage) : [0].repeat(NEIGHBOURHOOD_COUNT))
+	print("LOADED WEIGHTS")
+}
+
 KEYDOWN["s"] = () => {
 	selectedWeights = [...weights]
 	localStorage.setItem("weights", JSON.stringify(selectedWeights))
@@ -377,12 +384,14 @@ KEYDOWN["a"] = () => {
 	print("...")
 	previousHistory()
 	print("<- back")
+	if (historyPosition === 0) print("(at start of history)")
 }
 
 KEYDOWN["d"] = () => {
 	print("...")
 	nextHistory()
 	print("forwards ->")
+	if (historyPosition === history.length) print("(at end of history)")
 }
 
 KEYDOWN["1"] = () => skip = 1
