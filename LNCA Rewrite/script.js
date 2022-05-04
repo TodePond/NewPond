@@ -90,7 +90,7 @@ const WEIGHT_CHOICES = [-1, 0, 1]
 // GLOBALS //
 //=========//
 const world = new Map()
-const show = Show.start({speed: 0.5})
+const show = Show.start({speed: 1.0})
 let skip = 1
 let skipOffset = 0
 let clock = 0
@@ -110,12 +110,11 @@ let selectedWeights = [...weights]
 //=========//
 // WEIGHTS //
 //=========//
-
 const randomiseWeights = () => {
 	saveHistory()
 	for (let i = 0; i < weights.length; i++) {
-		//weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
-		weights[i] = Math.random() * WEIGHT_SEED_MAX*2 - WEIGHT_SEED_MAX
+		weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
+		//weights[i] = Math.random() * WEIGHT_SEED_MAX*2 - WEIGHT_SEED_MAX
 	}
 }
 
@@ -144,17 +143,25 @@ const nextHistory = () => {
 // CELL //
 //======//
 const makeCell = (x, y) => {
+
+	const neighbourhoods = []
+
+	for (let i = 0; i < NEIGHBOURHOOD_COUNT; i++) {
+		neighbourhoods.push([])
+	}
+
 	const cell = {
 		x,
 		y,
 		elementTick: ELEMENT_DEAD,
 		elementTock: ELEMENT_DEAD,
-		neighbourhoods: [],
+		neighbourhoods,
 		scoreTick: 0,
 		scoreTock: 0,
 		drawnElement: ELEMENT_DEAD,
 	}
-	return cell
+
+	return cell.d9
 }
 
 const getCellKey = (x, y) => `${x},${y}`
@@ -164,17 +171,11 @@ const getNextElementKey = () => t? "elementTock" : "elementTick"
 const getScoreKey = () => t? "scoreTick" : "scoreTock"
 const getNextScoreKey = () => t? "scoreTock" : "scoreTick"
 
-// TODO: fix this
-// currently, it works out the CELL's neighbourhoods.
-// instead, we want it to figure out what neighbourhoods it's PART OF, (not the origin of)
-// This issue didn't matter before, because I was only using bi-directional neighbourhoods.
-// But now, some neighbourhoods only apply in one direction
 const linkCell = (cell) => {
 
-	for (const NEIGHBOURHOOD of NEIGHBOURHOODS) {
+	for (let i = 0; i < NEIGHBOURHOODS.length; i++) {
+		const NEIGHBOURHOOD = NEIGHBOURHOODS[i]
 
-		const neighbourhood = []
-		cell.neighbourhoods.push(neighbourhood)
 
 		for (const [nx, ny] of NEIGHBOURHOOD) {
 			let [x, y] = [cell.x + nx, cell.y + ny]
@@ -184,7 +185,8 @@ const linkCell = (cell) => {
 			if (y >= WORLD_HEIGHT) y -= WORLD_HEIGHT
 			const key = getCellKey(x, y)
 			const neighbour = world.get(key)
-			neighbourhood.push(neighbour)
+			const neighbourhood = neighbour.neighbourhoods[i]
+			neighbourhood.push(cell)
 		}
 
 	}
