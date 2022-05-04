@@ -83,7 +83,9 @@ const printNeighbourhood = (neighbourhoodId) => {
 const WORLD_WIDTH = 1080 / 4
 const WORLD_HEIGHT = WORLD_WIDTH
 
-const WEIGHT_SEED_MAX = 1.0
+const WEIGHT_SEED_MAX = 2.0
+const WEIGHT_MUTATE_MAX = 0.5
+const WEIGHT_MUTATE_COUNT = Math.round(NEIGHBOURHOOD_COUNT / 8)
 const WEIGHT_CHOICES = [-1, 0, 1]
 
 //=========//
@@ -103,8 +105,7 @@ let historyPosition = 0
 
 const weightStorage = localStorage.getItem("weights")
 console.log("Loading weights:", weightStorage)
-let weights = weightStorage !== null? weightStorage : [0].repeat(NEIGHBOURHOOD_COUNT)
-weights[3] = 1
+let weights = weightStorage !== null? JSON.parse(weightStorage) : [0].repeat(NEIGHBOURHOOD_COUNT)
 let selectedWeights = [...weights]
 
 let changes = []
@@ -123,6 +124,19 @@ const randomiseWeights = () => {
 	setWeights(value)
 }
 
+const mutateWeights = () => {
+	saveHistory()
+
+	const newWeights = [...weights]
+
+	for (let i = 0; i < WEIGHT_MUTATE_COUNT; i++) {
+		const id = Random.Uint8 % NEIGHBOURHOOD_COUNT
+		newWeights[id] += Math.random() * WEIGHT_MUTATE_MAX*2 - WEIGHT_MUTATE_MAX
+	}
+
+	setWeights(newWeights)
+}
+
 const updateChanges = () => {
 	changes = []
 	for (let i = 0; i < weights.length; i++) {
@@ -134,6 +148,7 @@ const updateChanges = () => {
 const setWeights = (value) => {
 	weights = value
 	updateChanges()
+	updateCellScores()
 }
 
 updateChanges()
@@ -151,12 +166,12 @@ const saveHistory = () => {
 
 const previousHistory = () => {
 	if (historyPosition > 0) historyPosition--
-	weights = [...history[historyPosition]]
+	setWeights([...history[historyPosition]])
 }
 
 const nextHistory = () => {
 	if (historyPosition < history.length-1) historyPosition++
-	weights = [...history[historyPosition]]
+	setWeights([...history[historyPosition]])
 }
 
 //======//
@@ -318,7 +333,7 @@ on.keydown(e => {
 
 // Randomise world
 KEYDOWN["r"] = () => {
-	print("randomising world...")
+	print("...")
 	for (const cell of world.values()) {
 		const element = oneIn(2)? ELEMENT_ALIVE : ELEMENT_DEAD
 		setCell(show.context, cell, element, {update: false})
@@ -330,7 +345,7 @@ KEYDOWN["r"] = () => {
 
 // Clear world
 KEYDOWN["c"] = () => {
-	print("clearing world...")
+	print("...")
 	for (const cell of world.values()) {
 		setCell(show.context, cell, ELEMENT_DEAD, {update: false})
 		setCell(show.context, cell, ELEMENT_DEAD, {next: false, update: false})
@@ -341,31 +356,33 @@ KEYDOWN["c"] = () => {
 
 // mutate Weights
 KEYDOWN["w"] = () => {
-
+	print("...")
+	mutateWeights()
+	print("WEIGHTS MUTATED")
 }
 
-// Select weights to mutate from
 KEYDOWN["s"] = () => {
 	selectedWeights = [...weights]
-	//localStorage.setItem("weights", JSON.stringify(selectedWeights))
+	localStorage.setItem("weights", JSON.stringify(selectedWeights))
+	print("WEIGHTS SAVED")
 }
 
-// eXterminate weights and make random new ones
 KEYDOWN["x"] = () => {
+	print("...")
 	randomiseWeights()
-	print("randomising weights...")
-	updateCellScores()
 	print("WEIGHTS RANDOMISED")
 }
 
-// go to previous weights
 KEYDOWN["a"] = () => {
-
+	print("...")
+	previousHistory()
+	print("<- back")
 }
 
-// go to next weights
 KEYDOWN["d"] = () => {
-
+	print("...")
+	nextHistory()
+	print("forwards ->")
 }
 
 KEYDOWN["1"] = () => skip = 1
