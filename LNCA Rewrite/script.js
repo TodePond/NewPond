@@ -80,7 +80,7 @@ const printNeighbourhood = (neighbourhoodId) => {
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 1080 / 8
+const WORLD_WIDTH = 1080 / 4
 const WORLD_HEIGHT = WORLD_WIDTH
 
 const WEIGHT_SEED_MAX = 1.0
@@ -90,13 +90,13 @@ const WEIGHT_CHOICES = [-1, 0, 1]
 // GLOBALS //
 //=========//
 const world = new Map()
-const show = Show.start({speed: 1.0})
+const show = Show.start({speed: 0.5})
 let skip = 1
 let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 5
+let brushSize = 10
 
 const history = []
 let historyPosition = 0
@@ -107,16 +107,36 @@ let weights = weightStorage !== null? weightStorage : [0].repeat(NEIGHBOURHOOD_C
 weights[3] = 1
 let selectedWeights = [...weights]
 
+let changes = []
+
 //=========//
 // WEIGHTS //
 //=========//
 const randomiseWeights = () => {
 	saveHistory()
+	const value = []
 	for (let i = 0; i < weights.length; i++) {
-		weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
-		//weights[i] = Math.random() * WEIGHT_SEED_MAX*2 - WEIGHT_SEED_MAX
+		//weights[i] = WEIGHT_CHOICES[Random.Uint8 % WEIGHT_CHOICES.length]
+		value[i] = Math.random() * WEIGHT_SEED_MAX*2 - WEIGHT_SEED_MAX
+	}
+
+	setWeights(value)
+}
+
+const updateChanges = () => {
+	changes = []
+	for (let i = 0; i < weights.length; i++) {
+		const weight = weights[i]
+		changes.push([weight, weight * -1])
 	}
 }
+
+const setWeights = (value) => {
+	weights = value
+	updateChanges()
+}
+
+updateChanges()
 
 //=========//
 // HISTORY //
@@ -161,7 +181,7 @@ const makeCell = (x, y) => {
 		drawnElement: ELEMENT_DEAD,
 	}
 
-	return cell.d9
+	return cell
 }
 
 const getCellKey = (x, y) => `${x},${y}`
@@ -225,22 +245,22 @@ const drawCell = (context, cell) => {
 
 }
 
-const setCell = (context, cell, element, {next = true} = {}) => {
+const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 	
 	const nextElementKey = next? getNextElementKey() : getElementKey()
 	const oldElement = cell[nextElementKey]
 	cell[nextElementKey] = element
 
 	// Update neighbour scores
-	if (element !== oldElement) {
+	if (update && element !== oldElement) {
 		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
-		const dscore = element === ELEMENT_ALIVE? 1 : -1
+		const dscore = element === ELEMENT_ALIVE? 0 : 1
 
 		for (let i = 0; i < cell.neighbourhoods.length; i++) {
 			const neighbourhood = cell.neighbourhoods[i]
 			const weight = weights[i]
 			if (weight === 0) continue
-			const change = dscore * weight
+			const change = changes[i][dscore]
 			if (change === 0) continue
 			for (const neighbour of neighbourhood) {
 				neighbour[nextScoreKey] += change
@@ -298,17 +318,25 @@ on.keydown(e => {
 
 // Randomise world
 KEYDOWN["r"] = () => {
+	print("randomising world...")
 	for (const cell of world.values()) {
 		const element = oneIn(2)? ELEMENT_ALIVE : ELEMENT_DEAD
-		setCell(show.context, cell, element, {next: false})
+		setCell(show.context, cell, element, {update: false})
+		setCell(show.context, cell, element, {next: false, update: false})
 	}
+	updateCellScores()
+	print("WORLD RANDOMISED")
 }
 
 // Clear world
 KEYDOWN["c"] = () => {
+	print("clearing world...")
 	for (const cell of world.values()) {
-		setCell(show.context, cell, ELEMENT_DEAD, {next: false})
+		setCell(show.context, cell, ELEMENT_DEAD, {update: false})
+		setCell(show.context, cell, ELEMENT_DEAD, {next: false, update: false})
 	}
+	updateCellScores()
+	print("WORLD CLEARED")
 }
 
 // mutate Weights
@@ -325,7 +353,9 @@ KEYDOWN["s"] = () => {
 // eXterminate weights and make random new ones
 KEYDOWN["x"] = () => {
 	randomiseWeights()
+	print("randomising weights...")
 	updateCellScores()
+	print("WEIGHTS RANDOMISED")
 }
 
 // go to previous weights
@@ -337,6 +367,9 @@ KEYDOWN["a"] = () => {
 KEYDOWN["d"] = () => {
 
 }
+
+KEYDOWN["1"] = () => skip = 1
+KEYDOWN["2"] = () => skip = 2
 
 //==========//
 // ELEMENTS //
@@ -358,9 +391,9 @@ const aliveScores = [
 const behave = (context, cell) => {
 	const score = getCellScore(cell)
 
-	if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
+	/*if (aliveScores.includes(score)) setCell(context, cell, ELEMENT_ALIVE)
 	else setCell(context, cell, ELEMENT_DEAD)
-	return
+	return*/
 
 	const element = score > 0? ELEMENT_ALIVE : ELEMENT_DEAD
 	setCell(context, cell, element)
