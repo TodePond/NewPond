@@ -24,15 +24,16 @@ COLOURS = COLOURS.filter(c => c !== COLOUR_EMPTY_OBJ)
 const COLOUR_HEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 COLOURS = COLOURS.filter(c => c !== COLOUR_HEAD_OBJ)
 const COLOUR_TAIL_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
-COLOURS = COLOURS.filter(c => c !== COLOUR_HEAD_OBJ)
-const COLOUR_TAIL_TAIL_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_TAIL_OBJ)
+const COLOUR_TAIL_TAIL_OBJ = COLOUR_TAIL_OBJ
 
 
 const COLOUR_CABLE = [COLOUR_CABLE_OBJ.r, COLOUR_CABLE_OBJ.g, COLOUR_CABLE_OBJ.b, 255]
 const COLOUR_EMPTY = [COLOUR_EMPTY_OBJ.r, COLOUR_EMPTY_OBJ.g, COLOUR_EMPTY_OBJ.b, 255]
 const COLOUR_HEAD = [COLOUR_HEAD_OBJ.r, COLOUR_HEAD_OBJ.g, COLOUR_HEAD_OBJ.b, 255]
-const COLOUR_TAIL = [COLOUR_TAIL_OBJ.r, COLOUR_TAIL_OBJ.g, COLOUR_TAIL_OBJ.b, 255]
 const COLOUR_TAIL_TAIL = [COLOUR_TAIL_TAIL_OBJ.r, COLOUR_TAIL_TAIL_OBJ.g, COLOUR_TAIL_TAIL_OBJ.b, 255]
+//const COLOUR_TAIL = [COLOUR_TAIL_OBJ.r, COLOUR_TAIL_OBJ.g, COLOUR_TAIL_OBJ.b, 255]
+const COLOUR_TAIL = [...[0, 1, 2].map(i => Math.round((COLOUR_HEAD[i] + COLOUR_TAIL_TAIL[i])/2)), 255]
 
 //===============//
 // NEIGHBOURHOOD //
@@ -61,7 +62,7 @@ const WORLD_HEIGHT = WORLD_WIDTH
 // GLOBALS //
 //=========//
 const world = new Map()
-const show = Show.start({speed: 1.0})
+const show = Show.start({speed: 2.0})
 let skip = 1
 let skipOffset = 0
 let clock = 0
@@ -158,13 +159,13 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 		} else if (oldElement === ELEMENT_HEAD && element !== ELEMENT_HEAD) {
 			dscore = -1
 		}
-		if (dscore === 0) return
-
-		const neighbourhood = cell.neighbourhood
-		const change = dscore
-		const nextScoreKey = next? getNextScoreKey() : getScoreKey()
-		for (const neighbour of neighbourhood) {
-			neighbour[nextScoreKey] += change
+		if (dscore !== 0) {
+			const neighbourhood = cell.neighbourhood
+			const change = dscore
+			const nextScoreKey = next? getNextScoreKey() : getScoreKey()
+			for (const neighbour of neighbourhood) {
+				neighbour[nextScoreKey] += change
+			}
 		}
 	}
 
@@ -241,6 +242,7 @@ KEYDOWN["c"] = () => {
 KEYDOWN["1"] = () => selectedElement = ELEMENT_CABLE
 KEYDOWN["2"] = () => selectedElement = ELEMENT_HEAD
 KEYDOWN["3"] = () => selectedElement = ELEMENT_TAIL
+KEYDOWN["4"] = () => selectedElement = ELEMENT_TAIL_TAIL
 
 //==========//
 // ELEMENTS //
