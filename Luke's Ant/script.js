@@ -27,6 +27,16 @@ const COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 const COLOUR_OFF = [COLOUR_OFF_OBJ.r, COLOUR_OFF_OBJ.g, COLOUR_OFF_OBJ.b, 255]
 const COLOUR_ANT = [COLOUR_ANT_OBJ.r, COLOUR_ANT_OBJ.g, COLOUR_ANT_OBJ.b, 255]
 
+//========//
+// NUMBER //
+//========//
+const wrap = (n, min, max) => {
+	const difference = max - min + 1
+	while (n < min) n += difference
+	while (n > max) n -= difference
+	return n
+}
+
 //===============//
 // NEIGHBOURHOOD //
 //===============//
@@ -45,10 +55,14 @@ const NEIGHBOURHOOD = [
 ]
 
 const MOVEMENT_NEIGHBOURHOOD = [
-	//[ 1, 0],
-	//[ 0, 1],
+	[ 1, 0],
+	[ 1, 1],
+	[ 0, 1],
+	[-1, 1],
 	[-1, 0],
-	//[ 0,-1],
+	[-1,-1],
+	[ 0,-1],
+	[ 1,-1],
 ]
 
 //========//
@@ -61,6 +75,7 @@ const WORLD_HEIGHT = WORLD_WIDTH
 // GLOBALS //
 //=========//
 const world = new Map()
+const ants = new Set()
 const show = Show.start({speed: 1.0})
 let skip = 1
 let skipOffset = 0
@@ -85,6 +100,7 @@ const makeCell = (x, y) => {
 		scoreTock: 0,
 		drawnElement: ELEMENT_OFF,
 		age: 0,
+		cell: undefined,
 	}
 
 	return cell
@@ -159,6 +175,11 @@ const drawCell = (context, cell) => {
 
 const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 	
+	if (element.data.isAnt) {
+		ants.add(element)
+		element.cell = cell
+	}
+
 	cell.elementTick = element
 	cell.age = clock
 
@@ -195,7 +216,7 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 //=======//
 // BRUSH //
 //=======//
-const paint = (context, element, options) => {
+const paint = (context, element) => {
 	const {canvas} = context
 	const [mx, my] = Mouse.position
 	const x = Math.floor((mx - canvas.offsetLeft) / canvas.width * WORLD_WIDTH)
@@ -259,6 +280,12 @@ KEYDOWN["1"] = () => show.speed = 0.5
 KEYDOWN["2"] = () => show.speed = 1.0
 KEYDOWN["3"] = () => show.speed = 2.0
 KEYDOWN["4"] = () => show.speed = 4.0
+KEYDOWN["5"] = () => show.speed = 8.0
+KEYDOWN["6"] = () => show.speed = 16.0
+KEYDOWN["7"] = () => show.speed = 32.0
+KEYDOWN["8"] = () => show.speed = 64.0
+KEYDOWN["9"] = () => show.speed = 128.0
+KEYDOWN["9"] = () => show.speed = 256.0
 
 //==========//
 // ELEMENTS //
@@ -282,14 +309,14 @@ const behave = (context, cell) => {
 const ELEMENT_OFF = makeElement({
 	colour: COLOUR_OFF,
 	behave: (context, cell) => {
-		if (cell.age !== clock) setCell(context, cell, ELEMENT_OFF)
+		//setCell(context, cell, ELEMENT_OFF)
 	}
 })
 
 const ELEMENT_ON = makeElement({
 	colour: COLOUR_ON,
 	behave: (context, cell) => {
-		if (cell.age !== clock) setCell(context, cell, ELEMENT_ON)
+		//setCell(context, cell, ELEMENT_ON)
 	}
 })
 
@@ -298,19 +325,21 @@ const ELEMENT_ANT = ({direction = 0, above = ELEMENT_OFF} = {}) => makeElement({
 	draw: () => {
 		// TODO
 	},
-	data: {direction, above},
+	data: {direction, above, isAnt: true},
 	behave: (context, cell, element) => {
 
 		if (cell.age === clock) return
 
-		const newElement = above === ELEMENT_OFF? ELEMENT_ON : ELEMENT_OFF
+		const newElement = element.data.above === ELEMENT_OFF? ELEMENT_ON : ELEMENT_OFF
 		setCell(context, cell, newElement)
 
+		const ddirection = (element.data.above === ELEMENT_OFF? 2 : -3) * 1
+		element.data.direction += ddirection
+		element.data.direction = wrap(element.data.direction, 0, MOVEMENT_NEIGHBOURHOOD.length-1)
+
 		const target = cell.movementNeighbourhood[element.data.direction]
-		element.data.direction++
-		if (element.data.direction >= MOVEMENT_NEIGHBOURHOOD.length) {
-			element.data.direction = 0
-		}
+		const elementKey = getElementKey()
+		element.data.above = target[elementKey]
 		setCell(context, target, element)
 	},
 })
@@ -398,21 +427,28 @@ show.resize = (context) => {
 }
 
 show.tick = (context) => {
-	for (const cell of world.values()) {
+	for (const ant of ants.values()) {
+		const cell = ant.cell
 		behave(context, cell)
 	}
 }
 
+let pencilUp = true
 show.supertick = (context) => {
 	
 
 	if (show.paused) t = !t
 
-	if (Mouse.Left) {
+	if (pencilUp && Mouse.Left) {
 		paint(context, ELEMENT_ANT())
+		pencilUp = false
 	}
 	else if (Mouse.Right) {
 		paint(context, ELEMENT_ON)
+	}
+
+	if (!Mouse.Left) {
+		pencilUp = true
 	}
 
 	context.putImageData(show.imageData, 0, 0)
