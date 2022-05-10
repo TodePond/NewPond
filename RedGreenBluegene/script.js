@@ -19,13 +19,10 @@ let COLOURS = [
 
 const COLOUR_ON_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 COLOURS = COLOURS.filter(c => c !== COLOUR_ON_OBJ)
-const COLOUR_OFF_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
-COLOURS = COLOURS.filter(c => c !== COLOUR_OFF_OBJ)
-const COLOUR_ANT_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_OFF_OBJ = Colour.Black
 
 const COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 const COLOUR_OFF = [COLOUR_OFF_OBJ.r, COLOUR_OFF_OBJ.g, COLOUR_OFF_OBJ.b, 255]
-const COLOUR_ANT = [COLOUR_ANT_OBJ.r, COLOUR_ANT_OBJ.g, COLOUR_ANT_OBJ.b, 255]
 
 //========//
 // NUMBER //
@@ -41,7 +38,10 @@ const wrap = (n, min, max) => {
 // NEIGHBOURHOOD //
 //===============//
 const NEIGHBOURHOOD = [
-	[ 0, 0],
+	[ 1, 0],
+	[ 0, 1],
+	[-1, 0],
+	[ 0,-1],
 
 	/*[ 1, 0],
 	[-1, 0],
@@ -56,13 +56,14 @@ const NEIGHBOURHOOD = [
 
 const MOVEMENT_NEIGHBOURHOOD = [
 	[ 1, 0],
-	[ 1, 1],
 	[ 0, 1],
-	[-1, 1],
 	[-1, 0],
-	[-1,-1],
 	[ 0,-1],
-	[ 1,-1],
+
+	/*[ 1, 1],
+	[-1, 1],
+	[-1,-1],
+	[ 1,-1],*/
 ]
 
 //========//
@@ -75,14 +76,14 @@ const WORLD_HEIGHT = WORLD_WIDTH
 // GLOBALS //
 //=========//
 const world = new Map()
-const ants = new Set()
+const ents = new Set()
 const show = Show.start({speed: 1.0})
 let skip = 1
 let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 0
+let brushSize = 10
 
 //======//
 // CELL //
@@ -173,10 +174,22 @@ const drawCell = (context, cell) => {
 
 }
 
+const isCellTrapped = (cell) => {
+	const elementKey = getElementKey()
+	for (const neighbour of cell.movementNeighbourhood) {
+		if (neighbour[elementKey] === ELEMENT_OFF) return false
+	}
+	return true
+}
+
 const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 	
-	if (element.data.isAnt) {
-		ants.add(element)
+	if (element.data.isEnt) {
+		if (isCellTrapped(cell)) {
+			ents.delete(element)
+		} else {
+			ents.add(element)
+		}
 		element.cell = cell
 	}
 
@@ -184,24 +197,19 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 	cell.age = clock
 
 	const nextElementKey = next? getNextElementKey() : getElementKey()
-	const oldElement = cell[nextElementKey]
 	cell[nextElementKey] = element
 
 	// Update neighbour scores
-	if (update && element !== oldElement) {
-
-		let dscore = 0
-		if (oldElement !== ELEMENT_ON && element === ELEMENT_ON) {
-			dscore = 1
-		} else if (oldElement === ELEMENT_ON && element !== ELEMENT_ON) {
-			dscore = -1
-		}
-		if (dscore !== 0) {
-			const neighbourhood = cell.neighbourhood
-			const change = dscore
-			const nextScoreKey = next? getNextScoreKey() : getScoreKey()
-			for (const neighbour of neighbourhood) {
-				neighbour[nextScoreKey] += change
+	if (update) {
+		const neighbourhood = cell.neighbourhood
+		for (const neighbour of neighbourhood) {
+			const nelement = neighbour[nextElementKey]
+			if (nelement.data.isEnt) {
+				if (isCellTrapped(neighbour)) {
+					ents.delete(nelement)
+				} else {
+					ents.add(nelement)
+				}
 			}
 		}
 	}
@@ -216,17 +224,17 @@ const setCell = (context, cell, element, {next = true, update = true} = {}) => {
 //=======//
 // BRUSH //
 //=======//
-const paint = (context, element) => {
+const paint = (context, element, size = brushSize) => {
 	const {canvas} = context
 	const [mx, my] = Mouse.position
 	const x = Math.floor((mx - canvas.offsetLeft) / canvas.width * WORLD_WIDTH)
 	const y = Math.floor((my - canvas.offsetTop) / canvas.height * WORLD_HEIGHT)
-	for (let px = -brushSize; px < brushSize; px++) {
-		for (let py = -brushSize; py < brushSize; py++) {
+	for (let px = -size; px < size; px++) {
+		for (let py = -size; py < size; py++) {
 			place(context, x+px, y+py, element)
 		}
 	}
-	if (brushSize === 0) {
+	if (size === 0) {
 		place(context, x, y, element)
 	}
 }
@@ -256,8 +264,9 @@ on.keydown(e => {
 // Randomise world
 KEYDOWN["r"] = () => {
 	print("...")
+	ents.clear()
 	for (const cell of world.values()) {
-		const element = oneIn(2)? ELEMENT_ON : ELEMENT_OFF
+		const element = oneIn(2)? ELEMENT_ON() : ELEMENT_OFF
 		setCell(show.context, cell, element, {update: false})
 		setCell(show.context, cell, element, {next: false, update: false})
 	}
@@ -268,6 +277,7 @@ KEYDOWN["r"] = () => {
 // Clear world
 KEYDOWN["c"] = () => {
 	print("...")
+	ents.clear()
 	for (const cell of world.values()) {
 		setCell(show.context, cell, ELEMENT_OFF, {update: false})
 		setCell(show.context, cell, ELEMENT_OFF, {next: false, update: false})
@@ -286,6 +296,13 @@ KEYDOWN["7"] = () => show.speed = 32.0
 KEYDOWN["8"] = () => show.speed = 64.0
 KEYDOWN["9"] = () => show.speed = 128.0
 KEYDOWN["9"] = () => show.speed = 256.0
+
+//========//
+// RANDOM //
+//========//
+const getRandomDirection = () => {
+	return Random.Uint8 % 4
+}
 
 //==========//
 // ELEMENTS //
@@ -313,35 +330,25 @@ const ELEMENT_OFF = makeElement({
 	}
 })
 
-const ELEMENT_ON = makeElement({
+const ELEMENT_ON = () => makeElement({
 	colour: COLOUR_ON,
-	behave: (context, cell) => {
-		//setCell(context, cell, ELEMENT_ON)
-	}
-})
-
-const ELEMENT_ANT = ({direction = 0, above = ELEMENT_OFF} = {}) => makeElement({
-	colour: COLOUR_ANT,
-	draw: () => {
-		// TODO
+	data: {
+		isEnt: true,
 	},
-	data: {direction, above, isAnt: true},
 	behave: (context, cell, element) => {
-
 		if (cell.age === clock) return
 
-		const newElement = element.data.above === ELEMENT_OFF? ELEMENT_ON : ELEMENT_OFF
-		setCell(context, cell, newElement)
+		const direction = getRandomDirection()
+		const target = cell.movementNeighbourhood[direction]
+		const oldElement = target[getElementKey()]
+		if (oldElement !== ELEMENT_OFF) return
 
-		const ddirection = (element.data.above === ELEMENT_OFF? 2 : -3) * 1
-		element.data.direction += ddirection
-		element.data.direction = wrap(element.data.direction, 0, MOVEMENT_NEIGHBOURHOOD.length-1)
-
-		const target = cell.movementNeighbourhood[element.data.direction]
-		const elementKey = getElementKey()
-		element.data.above = target[elementKey]
-		setCell(context, target, element)
-	},
+		const newElement = ELEMENT_ON()
+		for (let i = 0; i < 3; i++) {
+			newElement.colour[i] = element.colour[i]
+		}
+		setCell(context, target, newElement)
+	}
 })
 
 //=======//
@@ -427,8 +434,8 @@ show.resize = (context) => {
 }
 
 show.tick = (context) => {
-	for (const ant of ants.values()) {
-		const cell = ant.cell
+	for (const ent of ents.values()) {
+		const cell = ent.cell
 		behave(context, cell)
 	}
 }
@@ -440,11 +447,11 @@ show.supertick = (context) => {
 	if (show.paused) t = !t
 
 	if (pencilUp && Mouse.Left) {
-		paint(context, ELEMENT_ANT())
-		pencilUp = false
+		paint(context, ELEMENT_ON(), 0)
+		//pencilUp = false
 	}
 	else if (Mouse.Right) {
-		paint(context, ELEMENT_ON)
+		paint(context, ELEMENT_OFF)
 	}
 
 	if (!Mouse.Left) {
