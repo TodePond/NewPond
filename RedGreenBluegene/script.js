@@ -17,12 +17,19 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_ON_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
-COLOURS = COLOURS.filter(c => c !== COLOUR_ON_OBJ)
+let colouri = Random.Uint8 % COLOURS.length
+let COLOUR_ON_OBJ = COLOURS[colouri]
 const COLOUR_OFF_OBJ = Colour.Black
 
-const COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
+let COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 const COLOUR_OFF = [COLOUR_OFF_OBJ.r, COLOUR_OFF_OBJ.g, COLOUR_OFF_OBJ.b, 255]
+
+const nextColour = () => {
+	colouri++
+	if (colouri >= COLOURS.length) colouri = 0
+	COLOUR_ON_OBJ = COLOURS[colouri]
+	COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
+}
 
 //========//
 // NUMBER //
@@ -31,6 +38,12 @@ const wrap = (n, min, max) => {
 	const difference = max - min + 1
 	while (n < min) n += difference
 	while (n > max) n -= difference
+	return n
+}
+
+const clamp = (n, min, max) => {
+	if (n < min) return min
+	if (n > max) return max
 	return n
 }
 
@@ -69,8 +82,15 @@ const MOVEMENT_NEIGHBOURHOOD = [
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = Math.round(1080 / 1)
+const WORLD_SHRINK = 1
+const WORLD_SCALE = 1
+const WORLD_WIDTH = Math.round(1920 / WORLD_SHRINK * WORLD_SCALE)
+const WORLD_HEIGHT = Math.round(1080 / WORLD_SHRINK * WORLD_SCALE)
+
+/*
+const WORLD_WIDTH = Math.round(1080 / 0.5)
 const WORLD_HEIGHT = WORLD_WIDTH
+*/
 
 //=========//
 // GLOBALS //
@@ -83,7 +103,7 @@ let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 10
+let brushSize = 50
 
 //======//
 // CELL //
@@ -300,9 +320,9 @@ KEYDOWN["9"] = () => show.speed = 256.0
 //========//
 // RANDOM //
 //========//
-const getRandomDirection = () => {
-	return Random.Uint8 % 4
-}
+const getRandomDirection = () => Random.Uint8 % 4
+const getRandomMutation = (size) => Random.Uint32 % ((size)*2) - size
+const getMutatedChannel = (channel) => clamp(channel + getRandomMutation(3), 0, 255)
 
 //==========//
 // ELEMENTS //
@@ -331,7 +351,7 @@ const ELEMENT_OFF = makeElement({
 })
 
 const ELEMENT_ON = () => makeElement({
-	colour: COLOUR_ON,
+	colour: [...COLOUR_ON],
 	data: {
 		isEnt: true,
 	},
@@ -345,7 +365,7 @@ const ELEMENT_ON = () => makeElement({
 
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
-			newElement.colour[i] = element.colour[i]
+			newElement.colour[i] = getMutatedChannel(element.colour[i])
 		}
 		setCell(context, target, newElement)
 	}
@@ -434,7 +454,10 @@ show.resize = (context) => {
 }
 
 show.tick = (context) => {
-	for (const ent of ents.values()) {
+	const entos = [...ents.values()]
+	for (let i = 0; i < entos.length; i++) {
+		const id = Random.Uint32 % entos.length
+		const ent = entos[id]
 		const cell = ent.cell
 		behave(context, cell)
 	}
@@ -446,9 +469,10 @@ show.supertick = (context) => {
 
 	if (show.paused) t = !t
 
-	if (pencilUp && Mouse.Left) {
+	if (Mouse.Left) {
+		if (pencilUp) nextColour()
 		paint(context, ELEMENT_ON(), 0)
-		//pencilUp = false
+		pencilUp = false
 	}
 	else if (Mouse.Right) {
 		paint(context, ELEMENT_OFF)
