@@ -25,8 +25,10 @@ let COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 const COLOUR_OFF = [COLOUR_OFF_OBJ.r, COLOUR_OFF_OBJ.g, COLOUR_OFF_OBJ.b, 255]
 
 const nextColour = () => {
-	colouri++
-	if (colouri >= COLOURS.length) colouri = 0
+	/*colouri++
+	if (colouri >= COLOURS.length) colouri = 0*/
+
+	colouri = Random.Uint32 % COLOURS.length
 	COLOUR_ON_OBJ = COLOURS[colouri]
 	COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 }
@@ -321,7 +323,7 @@ KEYDOWN["9"] = () => show.speed = 256.0
 // RANDOM //
 //========//
 const getRandomDirection = () => Random.Uint8 % 4
-const getRandomMutation = (size) => Random.Uint32 % ((size)*2) - size
+const getRandomMutation = (size) => Random.Uint32 % ((size)*2 + 1) - size
 const getMutatedChannel = (channel) => clamp(channel + getRandomMutation(3), 0, 255)
 
 //==========//
