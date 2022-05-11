@@ -322,9 +322,11 @@ KEYDOWN["9"] = () => show.speed = 256.0
 //========//
 // RANDOM //
 //========//
+const BIAS = -1
+const MUTATION = 2
 const getRandomDirection = () => Random.Uint8 % 4
-const getRandomMutation = (size) => Random.Uint32 % ((size)*2 + 1) - size
-const getMutatedChannel = (channel) => clamp(channel + getRandomMutation(3), 0, 255)
+const getRandomMutation = (size) => Random.Uint32 % ((size)*2 + 1 + BIAS) - size
+const getMutatedChannel = (channel, size) => clamp(channel + getRandomMutation(Math.round(MUTATION * size)), 0, 255)
 
 //==========//
 // ELEMENTS //
@@ -367,7 +369,8 @@ const ELEMENT_ON = () => makeElement({
 
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
-			newElement.colour[i] = getMutatedChannel(element.colour[i])
+			const s = i === 2? 3 : 1
+			newElement.colour[i] = getMutatedChannel(element.colour[i], s)
 		}
 		setCell(context, target, newElement)
 	}
