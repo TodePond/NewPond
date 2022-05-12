@@ -360,7 +360,7 @@ const ELEMENT_ON = () => makeElement({
 		isEnt: true,
 	},
 	behave: (context, cell, element) => {
-		if (cell.age === clock) return
+		//if (cell.age === clock) return
 
 		const direction = getRandomDirection()
 		const target = cell.movementNeighbourhood[direction]
