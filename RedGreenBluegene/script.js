@@ -344,13 +344,14 @@ const getCellScore = (cell) => {
 const behave = (context, cell) => {
 	const elementKey = getElementKey()
 	const element = cell[elementKey]
-	element.behave(context, cell, element)
+	return element.behave(context, cell, element)
 }
 
 const ELEMENT_OFF = makeElement({
 	colour: COLOUR_OFF,
-	behave: (context, cell) => {
+	behave: (context, cell, element) => {
 		//setCell(context, cell, ELEMENT_OFF)
+		return element
 	}
 })
 
@@ -365,7 +366,7 @@ const ELEMENT_ON = () => makeElement({
 		const direction = getRandomDirection()
 		const target = cell.movementNeighbourhood[direction]
 		const oldElement = target[getElementKey()]
-		if (oldElement !== ELEMENT_OFF) return
+		if (oldElement !== ELEMENT_OFF) return element
 
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
@@ -373,6 +374,7 @@ const ELEMENT_ON = () => makeElement({
 			newElement.colour[i] = getMutatedChannel(element.colour[i], s)
 		}
 		setCell(context, target, newElement)
+		return newElement
 	}
 })
 
@@ -464,7 +466,7 @@ show.tick = (context) => {
 		const id = Random.Uint32 % entos.length
 		const ent = entos[id]
 		const cell = ent.cell
-		behave(context, cell)
+		entos[id] = behave(context, cell)
 	}
 }
 
