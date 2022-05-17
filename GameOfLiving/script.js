@@ -8,8 +8,8 @@ let brushSize = 0
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 50
-const WORLD_HEIGHT = WORLD_WIDTH
+const WORLD_WIDTH = 64
+const WORLD_HEIGHT = 36
 const NEIGHBOURHOOD = [
 
 	[ 1,-1],
@@ -149,9 +149,10 @@ const place = (context, x, y, alive) => {
 	const key = getCellKey(x, y)
 	const cell = world.get(key)
 	const target = alive? ELEMENT_ALIVE : ELEMENT_DEAD
-	if (cell[getElementKey()] !== target) {
+	//if (cell[getElementKey()] !== target) {
 		changeCell(context, cell, target)
-	}
+	//}
+	drawCell(context, cell)
 }
 
 //==========//
@@ -204,7 +205,7 @@ for (const cell of world.values()) {
 //======//
 // SHOW //
 //======//
-const show = Show.start({speed: 1.0, scale: 0.95})
+const show = Show.start({speed: 1.0})
 
 show.resize = (context) => {
 	drawWorld(context)

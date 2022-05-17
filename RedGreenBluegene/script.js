@@ -325,8 +325,9 @@ KEYDOWN["9"] = () => show.speed = 256.0
 const BIAS = -1
 const MUTATION = 2
 const getRandomDirection = () => Random.Uint8 % 4
+//const getRandomDirection = () => clock % 4
 const getRandomMutation = (size) => Random.Uint32 % ((size)*2 + 1 + BIAS) - size
-const getMutatedChannel = (channel, size) => clamp(channel + getRandomMutation(Math.round(MUTATION * size)), 0, 255)
+const getMutatedChannel = (channel, size) => clamp(channel + getRandomMutation(MUTATION * size), 0, 255)
 
 //==========//
 // ELEMENTS //
@@ -370,7 +371,7 @@ const ELEMENT_ON = () => makeElement({
 
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
-			const s = i === 2? 3 : 1
+			const s = i === 2? 1 : 3
 			newElement.colour[i] = getMutatedChannel(element.colour[i], s)
 		}
 		setCell(context, target, newElement)
@@ -464,6 +465,7 @@ show.tick = (context) => {
 	const entos = [...ents.values()]
 	for (let i = 0; i < entos.length; i++) {
 		const id = Random.Uint32 % entos.length
+		//const id = i
 		const ent = entos[id]
 		const cell = ent.cell
 		entos[id] = behave(context, cell)

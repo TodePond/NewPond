@@ -319,7 +319,7 @@ const ELEMENT_TAIL_TAIL = makeElement({
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score > 0) {
-			setCell(context, cell, ELEMENT_TAIL)
+			setCell(context, cell, ELEMENT_TAIL_TAIL)
 		} else {
 			setCell(context, cell, ELEMENT_CABLE)
 		}
