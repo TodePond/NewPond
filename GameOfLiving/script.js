@@ -1,3 +1,26 @@
+//========//
+// COLOUR //
+//========//
+let COLOURS = [
+	Colour.Black,
+	Colour.Blue,
+	Colour.Cyan,
+	Colour.Green,
+	Colour.Grey,
+	Colour.Orange,
+	Colour.Pink,
+	Colour.Purple,
+	Colour.Red,
+	Colour.Rose,
+	Colour.Silver,
+	Colour.White,
+	Colour.Yellow
+]
+
+const COLOUR_ALIVE = COLOURS[Random.Uint8 % COLOURS.length]
+COLOURS = COLOURS.filter(c => c !== COLOUR_ALIVE)
+const COLOUR_DEAD = COLOURS[Random.Uint8 % COLOURS.length]
+
 //=========//
 // GLOBALS //
 //=========//
@@ -8,8 +31,8 @@ let brushSize = 0
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 64
-const WORLD_HEIGHT = 36
+const WORLD_WIDTH = 64 * 2
+const WORLD_HEIGHT = 36 * 2
 const NEIGHBOURHOOD = [
 
 	[ 1,-1],
@@ -170,7 +193,7 @@ const getCellScore = (cell) => {
 }
 
 const ELEMENT_DEAD = makeElement({
-	colour: Colour.Black,
+	colour: COLOUR_DEAD,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score >= 3 && score <= 3) changeCell(context, cell, ELEMENT_ALIVE)
@@ -179,7 +202,7 @@ const ELEMENT_DEAD = makeElement({
 })
 
 const ELEMENT_ALIVE = makeElement({
-	colour: Colour.Cyan,
+	colour: COLOUR_ALIVE,
 	behave: (context, cell) => {
 		const score = getCellScore(cell)
 		if (score < 2 || score > 3) changeCell(context, cell, ELEMENT_DEAD)
