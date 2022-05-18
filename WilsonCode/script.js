@@ -37,14 +37,14 @@ setRules(state.currentRule)
 
 on.load(() => {
 
-	const show = Show.start({paused: false, scale: 1.0})
+	const show = Show.start({paused: false, scale: 1.0, speed: 10.0})
 	const {context, canvas} = show
 
-	const CELL_SIZE = 2
-	const CENTER = canvas.width/2 - CELL_SIZE/2
+	const CELL_SIZE = 2 / 4
+	const CENTER = (canvas.width/2 - CELL_SIZE/2) / 4
 	
 	const resetHistory = () => {
-		context.clearRect(0, 0, canvas.width, canvas.height)
+		//context.clearRect(0, 0, canvas.width, canvas.height)
 		state.history = [makeSnapshot({x: 0, cells: [true]})]
 	}
 	
@@ -90,19 +90,28 @@ on.load(() => {
 	})
 	
 	const drawSnapshot = (snapshot, y) => {
+
+		context.resetTransform()
+		const offsetX = (state.currentRule % 4) * canvas.width/4
+		const offsetY = Math.floor(state.currentRule / 4) * canvas.height/4
+		context.translate(offsetX, offsetY)
 		
 		const leftEdge = CENTER + snapshot.x*CELL_SIZE
 		const rightEdge = leftEdge + snapshot.cells.length*CELL_SIZE
 		
+		if (y * CELL_SIZE > canvas.height / 4) return true
+
 		context.fillStyle = snapshot.leftVoid? Colour.Blue : Colour.Black
 		context.fillRect(0, Math.round(y*CELL_SIZE), Math.round(leftEdge), Math.round(CELL_SIZE))
 		
 		context.fillStyle = snapshot.rightVoid? Colour.Blue : Colour.Black
-		context.fillRect(Math.round(rightEdge), Math.round(y*CELL_SIZE), canvas.width, Math.round(CELL_SIZE))
+		context.fillRect(Math.round(rightEdge), Math.round(y*CELL_SIZE), canvas.width / 4 - rightEdge, Math.round(CELL_SIZE))
 		
 		for (let i = 0; i < snapshot.cells.length; i++) {
 			const cell = snapshot.cells[i]
 			const x = CENTER + (snapshot.x + i)*CELL_SIZE
+
+
 			context.fillStyle = cell? Colour.Blue : Colour.Black
 			context.fillRect(Math.round(x), Math.round(y*CELL_SIZE), Math.round(CELL_SIZE), Math.round(CELL_SIZE))
 		}
@@ -125,7 +134,15 @@ on.load(() => {
 			drawSnapshot(snapshot, i + 1)
 		}*/
 		
-		drawSnapshot(state.history.last, state.history.length)
+		const isFinished = drawSnapshot(state.history.last, state.history.length)
+		if (isFinished) {
+			state.currentRule++
+			if (state.currentRule >= 16) {
+				show.paused = true
+			}
+			setRules(state.currentRule)
+			resetHistory()
+		}
 		
 		
 		const previous = state.history.last

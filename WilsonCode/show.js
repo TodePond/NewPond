@@ -59,14 +59,13 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 	let time = performance.now()
 	const wrappedTick = () => {
 		
-		/*t += show.speed
+		t += show.speed
 		if (t < 1.0) return
 		t = 0
 
 		for (let i = 0; i < show.speed; i++) {
-			show.tick()
-		}*/
-		if (!show.paused) show.tick()
+			if (!show.paused) show.tick()
+		}
 	
 		requestAnimationFrame(wrappedTick)
 	}
