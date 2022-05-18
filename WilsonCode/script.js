@@ -37,11 +37,13 @@ setRules(state.currentRule)
 
 on.load(() => {
 
-	const show = Show.start({paused: false, scale: 1.0, speed: 10.0})
+	const show = Show.start({paused: true, scale: 1.0, speed: 5.0})
 	const {context, canvas} = show
 
+
+	const round = n => Math.round(n)
 	const CELL_SIZE = 2 / 4
-	const CENTER = (canvas.width/2 - CELL_SIZE/2) / 4
+	const CENTER = round((canvas.width/2 - CELL_SIZE/2) / 4)
 	
 	const resetHistory = () => {
 		//context.clearRect(0, 0, canvas.width, canvas.height)
@@ -89,6 +91,9 @@ on.load(() => {
 		resetHistory()
 	})
 	
+	const COLOUR_ON = Colour.Red
+	const COLOUR_OFF = Colour.Black
+
 	const drawSnapshot = (snapshot, y) => {
 
 		context.resetTransform()
@@ -101,19 +106,19 @@ on.load(() => {
 		
 		if (y * CELL_SIZE > canvas.height / 4) return true
 
-		context.fillStyle = snapshot.leftVoid? Colour.Blue : Colour.Black
-		context.fillRect(0, Math.round(y*CELL_SIZE), Math.round(leftEdge), Math.round(CELL_SIZE))
+		context.fillStyle = snapshot.leftVoid? COLOUR_ON : COLOUR_OFF
+		context.fillRect(...[0, (y*CELL_SIZE), (leftEdge), (CELL_SIZE)].map(n => round(n)))
 		
-		context.fillStyle = snapshot.rightVoid? Colour.Blue : Colour.Black
-		context.fillRect(Math.round(rightEdge), Math.round(y*CELL_SIZE), canvas.width / 4 - rightEdge, Math.round(CELL_SIZE))
+		context.fillStyle = snapshot.rightVoid? COLOUR_ON : COLOUR_OFF
+		context.fillRect(...[(rightEdge), (y*CELL_SIZE), canvas.width / 4 - rightEdge, (CELL_SIZE)].map(n => round(n)))
 		
 		for (let i = 0; i < snapshot.cells.length; i++) {
 			const cell = snapshot.cells[i]
 			const x = CENTER + (snapshot.x + i)*CELL_SIZE
 
 
-			context.fillStyle = cell? Colour.Blue : Colour.Black
-			context.fillRect(Math.round(x), Math.round(y*CELL_SIZE), Math.round(CELL_SIZE), Math.round(CELL_SIZE))
+			context.fillStyle = cell? COLOUR_ON : COLOUR_OFF
+			context.fillRect(...[x, y*CELL_SIZE, CELL_SIZE, CELL_SIZE].map(n => round(n)))
 		}
 	}
 	
