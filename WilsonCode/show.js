@@ -8,7 +8,7 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 
 	const canvas = document.createElement("canvas")
 	const context = canvas.getContext("2d")
-	canvas.style["background-color"] = Colour.Void
+	canvas.style["background-color"] = Colour.Grey
 	//canvas.style["image-rendering"] = "pixelated"
 	document.body.appendChild(canvas)
 
@@ -53,18 +53,14 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 		if (e.key === " ") show.paused = !show.paused
 	})
 	
-	const interval = 1000/60
-
 	let t = 0
 	let time = performance.now()
 	const wrappedTick = () => {
 		
 		t += show.speed
-		if (t < 1.0) return
-		t = 0
-
-		for (let i = 0; i < show.speed; i++) {
+		while (t > 1.0) {
 			if (!show.paused) show.tick()
+			t -= 1.0
 		}
 	
 		requestAnimationFrame(wrappedTick)

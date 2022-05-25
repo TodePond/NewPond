@@ -37,12 +37,12 @@ setRules(state.currentRule)
 
 on.load(() => {
 
-	const show = Show.start({paused: true, scale: 1.0, speed: 5.0})
+	const show = Show.start({paused: true, scale: 1.0, speed: 0.5})
 	const {context, canvas} = show
 
 
 	const round = n => Math.round(n)
-	const CELL_SIZE = 2 / 4
+	const CELL_SIZE = 8
 	const CENTER = round((canvas.width/2 - CELL_SIZE/2) / 4)
 	
 	const resetHistory = () => {
@@ -99,12 +99,13 @@ on.load(() => {
 		context.resetTransform()
 		const offsetX = (state.currentRule % 4) * canvas.width/4
 		const offsetY = Math.floor(state.currentRule / 4) * canvas.height/4
+		//const offsetY = 0
 		context.translate(offsetX, offsetY)
 		
 		const leftEdge = CENTER + snapshot.x*CELL_SIZE
 		const rightEdge = leftEdge + snapshot.cells.length*CELL_SIZE
 		
-		if (y * CELL_SIZE > canvas.height / 4) return true
+		if ((y) * CELL_SIZE > canvas.height / 4) return true
 
 		context.fillStyle = snapshot.leftVoid? COLOUR_ON : COLOUR_OFF
 		context.fillRect(...[0, (y*CELL_SIZE), (leftEdge), (CELL_SIZE)].map(n => round(n)))
@@ -118,7 +119,7 @@ on.load(() => {
 
 
 			context.fillStyle = cell? COLOUR_ON : COLOUR_OFF
-			context.fillRect(...[x, y*CELL_SIZE, CELL_SIZE, CELL_SIZE].map(n => round(n)))
+			context.fillRect(...[x, (y*CELL_SIZE), CELL_SIZE, CELL_SIZE].map(n => round(n)))
 		}
 	}
 	
@@ -139,7 +140,7 @@ on.load(() => {
 			drawSnapshot(snapshot, i + 1)
 		}*/
 		
-		const isFinished = drawSnapshot(state.history.last, state.history.length)
+		const isFinished = drawSnapshot(state.history.last, state.history.length-1)
 		if (isFinished) {
 			state.currentRule++
 			if (state.currentRule >= 16) {
@@ -147,6 +148,7 @@ on.load(() => {
 			}
 			setRules(state.currentRule)
 			resetHistory()
+			return
 		}
 		
 		

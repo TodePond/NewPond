@@ -371,7 +371,7 @@ const ELEMENT_ON = () => makeElement({
 
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
-			const s = i === 2? 1 : 3
+			const s = i === 1? 0 : 3
 			newElement.colour[i] = getMutatedChannel(element.colour[i], s)
 		}
 		setCell(context, target, newElement)
