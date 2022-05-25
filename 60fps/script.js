@@ -1,5 +1,5 @@
 
-const show = Show.start({paused: true})
+const show = Show.start({paused: true, speed: 100.0})
 
 let global = {
 	lines: [1],
@@ -29,16 +29,22 @@ show.resize = (context) => {
 
 show.tick = (context) => {
 
+	/*global.colour++
+	if (global.colour >= COLOURS.length) global.colour = 0*/
+	context.fillStyle = COLOURS[global.colour]
+	context.globalAlpha = 0.01
+	context.filter = "blur(100px)"
 	context.font = `${FONT_SIZE + global.lines.last * FONT_GROWTH}px Rosario`
 
 	
 	let x = context.canvas.width/60 * (global.lines.last-1)
-	let y = Math.sin(global.lines.last / 20 + global.lines.length) * -400
+	let y = Math.sin(global.lines.last / 30 + (global.lines.length*Math.PI/3*2 * 1.0001 + (Math.random() - 0.5) * 1)) * -400
 	
 	//const x = Math.random() * context.canvas.width
 	//const y = Math.random() * context.canvas.height
 
-	context.fillText(global.lines.last, x, y + context.canvas.height/2)
+	const s = 200
+	context.fillRect(x, y + context.canvas.height/2 - s/2, s, s)
 
 	global.lines[global.lines.length-1]++
 
@@ -47,6 +53,14 @@ show.tick = (context) => {
 		global.colour++
 		if (global.colour >= COLOURS.length) global.colour = 0
 		context.fillStyle = COLOURS[global.colour]
+	}
+
+	if (Mouse.Left) {
+		context.fillStyle = Colour.Black
+		context.globalAlpha = 1.0
+		const cs = s
+		context.filter = "blur(20px)"
+		context.fillRect(Mouse.position[0] - cs/2 + (Math.random()-0.5) * s, Mouse.position[1] - cs/2 + (Math.random()-0.5) * s, cs, cs)
 	}
 
 }
