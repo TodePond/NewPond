@@ -17,9 +17,11 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_ALIVE = COLOURS[Random.Uint8 % COLOURS.length]
+/*const COLOUR_ALIVE = COLOURS[Random.Uint8 % COLOURS.length]
 COLOURS = COLOURS.filter(c => c !== COLOUR_ALIVE)
-const COLOUR_DEAD = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_DEAD = COLOURS[Random.Uint8 % COLOURS.length]*/
+const COLOUR_ALIVE = Colour.Green
+const COLOUR_DEAD = Colour.Black
 
 //=========//
 // GLOBALS //
@@ -31,8 +33,8 @@ let brushSize = 0
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 64 * 2
-const WORLD_HEIGHT = 36 * 2
+const WORLD_WIDTH = 64 * 1
+const WORLD_HEIGHT = 36 * 1
 const NEIGHBOURHOOD = [
 
 	[ 1,-1],
