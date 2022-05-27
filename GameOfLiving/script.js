@@ -28,13 +28,13 @@ const COLOUR_DEAD = Colour.Black
 //=========//
 const world = new Map()
 let t = true
-let brushSize = 0
+let brushSize = 120
 
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 64 * 1
-const WORLD_HEIGHT = 36 * 1
+const WORLD_WIDTH = 64 * 8
+const WORLD_HEIGHT = 36 * 8
 const NEIGHBOURHOOD = [
 
 	[ 1,-1],
@@ -151,9 +151,14 @@ const keepCell = (context, cell) => {
 	cell[nextScoreKey] = cell[scoreKey]*/
 }
 
+let i = 1
 const paint = (context, alive = true) => {
 	const {canvas} = context
-	const [mx, my] = Mouse.position
+	//const [mx, my] = Mouse.position
+	const mx = canvas.width/4 * i
+	const my = canvas.height/4 * i
+	i++
+	if (i > 3) i = 1
 	const x = Math.floor((mx - canvas.offsetLeft) / canvas.width * WORLD_WIDTH)
 	const y = Math.floor((my - canvas.offsetTop) / canvas.height * WORLD_HEIGHT)
 	for (let px = -brushSize; px < brushSize; px++) {
@@ -251,6 +256,8 @@ show.supertick = (context) => {
 	if (show.paused) t = !t
 
 	if (Mouse.Left) {
+		paint(context, true)
+		paint(context, true)
 		paint(context, true)
 	}
 	else if (Mouse.Right) {

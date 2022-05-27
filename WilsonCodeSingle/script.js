@@ -32,7 +32,7 @@ const setRules = (number) => {
 }
 
 state.rules = new Map()
-state.currentRule = 9
+state.currentRule = 6
 setRules(state.currentRule)
 
 on.load(() => {
@@ -109,10 +109,10 @@ on.load(() => {
 		//if ((y) * CELL_SIZE > canvas.height / 4) return true
 
 		context.fillStyle = snapshot.leftVoid? COLOUR_ON : COLOUR_OFF
-		context.fillRect(...[0, (y*CELL_SIZE), (leftEdge), (CELL_SIZE)].map(n => round(n)))
+		//context.fillRect(...[0, (y*CELL_SIZE), (leftEdge), (CELL_SIZE)].map(n => round(n)))
 		
 		context.fillStyle = snapshot.rightVoid? COLOUR_ON : COLOUR_OFF
-		context.fillRect(...[(rightEdge), (y*CELL_SIZE), canvas.width / 1 - rightEdge, (CELL_SIZE)].map(n => round(n)))
+		//context.fillRect(...[(rightEdge), (y*CELL_SIZE), canvas.width / 1 - rightEdge, (CELL_SIZE)].map(n => round(n)))
 		
 		for (let i = 0; i < snapshot.cells.length; i++) {
 			const cell = snapshot.cells[i]
