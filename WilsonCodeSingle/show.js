@@ -9,7 +9,7 @@ Show.start = ({tick = () => {}, speed = 1, paused = false, scale = 1.0, resize =
 	const canvas = document.createElement("canvas")
 	const context = canvas.getContext("2d")
 	//canvas.style["background-color"] = Colour.multiply(Colour.Blue, {lightness: 0.5})
-	canvas.style["background-color"] = Colour.Grey
+	canvas.style["background-color"] = Colour.Black
 	//canvas.style["image-rendering"] = "pixelated"
 	document.body.appendChild(canvas)
 
