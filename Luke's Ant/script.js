@@ -17,11 +17,11 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_ON_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_ON_OBJ = Colour.Yellow
 COLOURS = COLOURS.filter(c => c !== COLOUR_ON_OBJ)
-const COLOUR_OFF_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_OFF_OBJ = Colour.Black
 COLOURS = COLOURS.filter(c => c !== COLOUR_OFF_OBJ)
-const COLOUR_ANT_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_ANT_OBJ = Colour.White
 
 const COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 const COLOUR_OFF = [COLOUR_OFF_OBJ.r, COLOUR_OFF_OBJ.g, COLOUR_OFF_OBJ.b, 255]
@@ -68,8 +68,9 @@ const MOVEMENT_NEIGHBOURHOOD = [
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = Math.round(1080 / 1)
-const WORLD_HEIGHT = WORLD_WIDTH
+const SHRINK = 4
+const WORLD_WIDTH = Math.round(1920 / SHRINK)
+const WORLD_HEIGHT = Math.round(1080 / SHRINK)
 
 //=========//
 // GLOBALS //

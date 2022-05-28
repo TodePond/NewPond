@@ -2,7 +2,7 @@
 // COLOUR //
 //========//
 let COLOURS = [
-	Colour.Black,
+	/*Colour.Black,
 	Colour.Blue,
 	Colour.Cyan,
 	Colour.Green,
@@ -14,7 +14,11 @@ let COLOURS = [
 	Colour.Rose,
 	Colour.Silver,
 	Colour.White,
-	Colour.Yellow
+	Colour.Yellow*/
+	/*Colour.White,*/
+	Colour.Red,
+	Colour.Green,
+	Colour.Blue,
 ]
 
 let colouri = Random.Uint8 % COLOURS.length
@@ -25,10 +29,9 @@ let COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 const COLOUR_OFF = [COLOUR_OFF_OBJ.r, COLOUR_OFF_OBJ.g, COLOUR_OFF_OBJ.b, 255]
 
 const nextColour = () => {
-	/*colouri++
-	if (colouri >= COLOURS.length) colouri = 0*/
-
-	colouri = Random.Uint32 % COLOURS.length
+	colouri++
+	if (colouri >= COLOURS.length) colouri = 0
+	//colouri = Random.Uint32 % COLOURS.length
 	COLOUR_ON_OBJ = COLOURS[colouri]
 	COLOUR_ON = [COLOUR_ON_OBJ.r, COLOUR_ON_OBJ.g, COLOUR_ON_OBJ.b, 255]
 }
@@ -322,8 +325,8 @@ KEYDOWN["9"] = () => show.speed = 256.0
 //========//
 // RANDOM //
 //========//
-const BIAS = -1
-const MUTATION = 2
+const BIAS = -0
+const MUTATION = 3
 const getRandomDirection = () => Random.Uint8 % 4
 //const getRandomDirection = () => clock % 4
 const getRandomMutation = (size) => Random.Uint32 % ((size)*2 + 1 + BIAS) - size
@@ -371,7 +374,8 @@ const ELEMENT_ON = () => makeElement({
 
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
-			const s = i === 1? 0 : 3
+			//const s = i === 1? 0 : 3
+			const s = i === 0? 1 : 1
 			newElement.colour[i] = getMutatedChannel(element.colour[i], s)
 		}
 		setCell(context, target, newElement)

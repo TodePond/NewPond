@@ -17,9 +17,11 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_ALIVE_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+/*const COLOUR_ALIVE_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
 COLOURS = COLOURS.filter(c => c !== COLOUR_ALIVE_OBJ)
-const COLOUR_DEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_DEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]*/
+const COLOUR_ALIVE_OBJ = Colour.Rose
+const COLOUR_DEAD_OBJ = Colour.Black
 
 const COLOUR_ALIVE = [COLOUR_ALIVE_OBJ.r, COLOUR_ALIVE_OBJ.g, COLOUR_ALIVE_OBJ.b, 255]
 const COLOUR_DEAD = [COLOUR_DEAD_OBJ.r, COLOUR_DEAD_OBJ.g, COLOUR_DEAD_OBJ.b, 255]
@@ -80,8 +82,9 @@ const printNeighbourhood = (neighbourhoodId) => {
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = 1080 / 8
-const WORLD_HEIGHT = WORLD_WIDTH
+const SHRINK = 4
+const WORLD_WIDTH = Math.floor(1920 / SHRINK)
+const WORLD_HEIGHT = Math.floor(1080 / SHRINK)
 
 const WEIGHT_SEED_MAX = 2.0
 const WEIGHT_MUTATE_MAX = 0.5
@@ -98,7 +101,7 @@ let skipOffset = 0
 let clock = 0
 let isDrawFrame = true
 let t = true
-let brushSize = 10
+let brushSize = 5
 
 const history = []
 let historyPosition = 0

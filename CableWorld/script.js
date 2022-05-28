@@ -17,13 +17,13 @@ let COLOURS = [
 	Colour.Yellow
 ]
 
-const COLOUR_CABLE_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_CABLE_OBJ = Colour.Grey
 COLOURS = COLOURS.filter(c => c !== COLOUR_CABLE_OBJ)
-const COLOUR_EMPTY_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_EMPTY_OBJ = Colour.Black
 COLOURS = COLOURS.filter(c => c !== COLOUR_EMPTY_OBJ)
-const COLOUR_HEAD_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_HEAD_OBJ = Colour.Cyan
 COLOURS = COLOURS.filter(c => c !== COLOUR_HEAD_OBJ)
-const COLOUR_TAIL_OBJ = COLOURS[Random.Uint8 % COLOURS.length]
+const COLOUR_TAIL_OBJ = Colour.White
 COLOURS = COLOURS.filter(c => c !== COLOUR_TAIL_OBJ)
 const COLOUR_TAIL_TAIL_OBJ = COLOUR_TAIL_OBJ
 
@@ -55,8 +55,8 @@ const NEIGHBOURHOOD = [
 //========//
 // CONFIG //
 //========//
-const WORLD_WIDTH = Math.round(1080 / 4).d
-const WORLD_HEIGHT = WORLD_WIDTH
+const WORLD_WIDTH = Math.round(1080 / 4)
+const WORLD_HEIGHT = Math.round(1080 / 4)
 
 //=========//
 // GLOBALS //

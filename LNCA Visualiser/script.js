@@ -155,7 +155,7 @@ global.show.tick = (context) => {
 		}
 	}
 
-	const CHANGE = 0.05
+	const CHANGE = 0.03
 	for (const weight of global.weights) {
 		let choices = [0, 1, 2]
 		const from = choices[Random.Uint32 % choices.length]
