@@ -16,9 +16,7 @@ let COLOURS = [
 	Colour.White,
 	Colour.Yellow*/
 	/*Colour.White,*/
-	Colour.Red,
-	Colour.Green,
-	Colour.Blue,
+	Colour.make('#ffffff'),
 ]
 
 let colouri = Random.Uint8 % COLOURS.length
@@ -330,7 +328,9 @@ const MUTATION = 3
 const getRandomDirection = () => Random.Uint8 % 4
 //const getRandomDirection = () => clock % 4
 const getRandomMutation = (size) => Random.Uint32 % ((size)*2 + 1 + BIAS) - size
-const getMutatedChannel = (channel, size) => clamp(channel + getRandomMutation(MUTATION * size), 0, 255)
+const getMutatedChannel = (channel, size) => {
+		return clamp(channel + getRandomMutation(MUTATION * size), 0, 255)
+}
 
 //==========//
 // ELEMENTS //
@@ -375,7 +375,9 @@ const ELEMENT_ON = () => makeElement({
 		const newElement = ELEMENT_ON()
 		for (let i = 0; i < 3; i++) {
 			//const s = i === 1? 0 : 3
-			const s = i === 0? 1 : 1
+			let s = 1
+			if (i === 1) s = 0
+			if (i === 0) s = 3
 			newElement.colour[i] = getMutatedChannel(element.colour[i], s)
 		}
 		setCell(context, target, newElement)
@@ -488,7 +490,7 @@ show.supertick = (context) => {
 		pencilUp = false
 	}
 	else if (Mouse.Right) {
-		paint(context, ELEMENT_OFF)
+		//paint(context, ELEMENT_OFF)
 	}
 
 	if (!Mouse.Left) {
@@ -504,4 +506,4 @@ show.supertick = (context) => {
 
 }
 
-on.contextmenu(e => e.preventDefault(), {passive: false})
+//on.contextmenu(e => e.preventDefault(), {passive: false})
